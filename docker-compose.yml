@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: austral-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: austral
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - austral_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d austral']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: austral-api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: austral
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: docker-dev-secret-cambiar-en-produccion
+      JWT_EXPIRES_IN: 24h
+      ADMIN_PASSWORD: Admin123!
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  austral_pgdata:

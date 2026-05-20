@@ -1,0 +1,1225 @@
+// ==================== CATÁLOGO DE ESTADOS ====================
+Table cat_estados {
+  id serial [pk]
+  codigo varchar(50) [unique, not null]
+  nombre varchar(100) [not null]
+  descripcion text
+  entidad varchar(50) [not null]
+  orden int [default: 0]
+  color varchar(7)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    codigo [unique]
+    entidad
+    (entidad, codigo)
+  }
+}
+
+// ==================== TIPOS DE TRANSACCIÓN ====================
+Table tipos_transaccion {
+  id uuid [pk]
+  nombre varchar(100) [not null, unique]
+  descripcion text
+  afecta_saldo boolean [default: true]
+  tipo_operacion varchar(20)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    nombre [unique]
+    tipo_operacion
+  }
+}
+
+// ==================== TRANSACCIONES (SIMPLIFICADA) ====================
+Table transacciones {
+  id uuid [pk]
+  fecha timestamp [default: `now()`]
+  tipo_transaccion_id uuid [not null]
+  solicitud_id uuid // Vínculo opcional con solicitud para trazabilidad total
+  referencia varchar(100)
+  descripcion text
+  created_by uuid [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    fecha
+    tipo_transaccion_id
+    solicitud_id
+    referencia
+    created_by
+  }
+}
+
+// ==================== USUARIOS Y ROLES ====================
+Table users {
+  id uuid [pk]
+  username varchar [unique, not null]
+  email varchar [unique, not null]
+  password_hash text [not null]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    email
+    username
+  }
+}
+
+Table roles {
+  id serial [pk]
+  name varchar(50) [unique, not null]
+  description text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table user_roles {
+  id serial [pk]
+  user_id uuid [not null]
+  role_id int [not null]
+  assigned_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (user_id, role_id) [unique]
+    user_id
+    role_id
+  }
+}
+
+Table password_history {
+  id serial [pk]
+  user_id uuid [not null]
+  old_password_hash text
+  changed_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    user_id
+  }
+}
+
+Table sessions {
+  id serial [pk]
+  user_id uuid [not null]
+  token text [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  expires_at timestamp [not null]
+  
+  indexes {
+    token [unique]
+    user_id
+    expires_at
+  }
+}
+
+// ==================== EMPRESAS AUSTRAL ====================
+Table empresas_austral {
+  id uuid [pk]
+  nombre varchar(150) [not null, unique]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    nombre [unique]
+    created_by
+  }
+}
+
+// ==================== EMPRESAS INTERNAS ====================
+Table empresas_internas {
+  id uuid [pk]
+  nombre varchar(150) [not null, unique]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+
+  indexes {
+    nombre [unique]
+    created_by
+  }
+}
+
+// ELIMINADA: cuentas_bancarias_austral unificada en cuentas_empresa_austral
+
+// ==================== TENIENTES ====================
+Table tenientes {
+  id uuid [pk]
+  nombre varchar(150) [not null]
+  telefono varchar(20) [not null]
+  user_id uuid [not null, unique]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid // Quién registró al teniente
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    nombre
+    telefono
+    user_id [unique]
+  }
+}
+
+// ==================== ASOCIADOS ====================
+Table asociados {
+  id uuid [pk]
+  nombre varchar(150) [not null]
+  apellido_p varchar(150) [not null]
+  apellido_m varchar(150)
+  celular varchar(20) [not null, unique]
+  correo varchar(150) [not null, unique]
+  comision numeric(5,2) [not null]
+  user_id uuid [not null, unique]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    nombre
+    apellido_p
+    celular [unique]
+    correo [unique]
+    user_id [unique]
+    comision
+    (nombre, apellido_p, apellido_m)
+  }
+}
+
+// ==================== CLIENTES ====================
+Table clientes {
+  id uuid [pk]
+  empresa varchar(150) [not null]
+  nombre_contacto varchar(150) [not null]
+  apellido_p_contacto varchar(150) [not null]
+  apellido_m_contacto varchar(150)
+  telefono1 varchar(20) [not null]
+  telefono2 varchar(20)
+  correo1 varchar(150) [not null]
+  correo2 varchar(150)
+  calle varchar(150) [not null]
+  num_exterior varchar(20) [not null]
+  num_interior varchar(20)
+  colonia varchar(150)
+  municipio varchar(150)
+  ciudad varchar(150) [not null]
+  estado varchar(150) [not null]
+  pais varchar(100) [default: 'México']
+  codigo_postal varchar(10) [not null]
+  rfc varchar(13)
+  comision numeric(5,2) [default: 0.0]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    empresa
+    ciudad
+    estado
+    (empresa, ciudad)
+    correo1
+    telefono1
+    rfc
+    municipio
+  }
+}
+
+// ==================== CUENTAS BANCARIAS CLIENTES ====================
+Table cuentas_bancarias_clientes {
+  id uuid [pk]
+  cliente_id uuid [not null]
+  asociado_id uuid
+  alias varchar(100) [default: 'Cuenta Principal']
+  numero_cuenta varchar(50) [unique]
+  saldo_disponible numeric(12,2) [default: 0.00]
+  saldo_bloqueado numeric(12,2) [default: 0.00]
+  limite_credito numeric(12,2) [default: 0.00]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    cliente_id
+    asociado_id
+    numero_cuenta [unique]
+    is_active
+    saldo_disponible
+    (cliente_id, is_active)
+  }
+}
+
+// ==================== CLIENTE-ASOCIADOS (SIMPLIFICADA) ====================
+Table cliente_asociados {
+  id uuid [pk]
+  cliente_id uuid [not null]
+  asociado_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    cliente_id
+    asociado_id
+    (cliente_id, asociado_id) [unique]
+  }
+}
+
+// ==================== BENEFICIARIOS ====================
+Table beneficiarios {
+  id uuid [pk]
+  nombre varchar(150) [not null]
+  apellido_p varchar(150) [not null]
+  apellido_m varchar(150)
+  user_id uuid [not null, unique]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    nombre
+    apellido_p
+    user_id [unique]
+    (nombre, apellido_p, apellido_m)
+  }
+}
+
+// ==================== CUENTAS BANCARIAS BENEFICIARIOS ====================
+Table cuentas_bancarias_beneficiarios {
+  id uuid [pk]
+  beneficiario_id uuid [not null]
+  banco varchar(150) [not null]
+  cuenta varchar(50) [not null]
+  clabe varchar(50) [not null]
+  tarjeta varchar(50)
+  es_principal boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  is_active boolean [default: true]
+  
+  indexes {
+    beneficiario_id
+    cuenta
+    clabe
+    (beneficiario_id, es_principal)
+  }
+}
+
+// ==================== CLIENTE-BENEFICIARIOS ====================
+Table cliente_beneficiarios {
+  id serial [pk]
+  cliente_id uuid [not null]
+  beneficiario_id uuid [not null]
+  assigned_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (cliente_id, beneficiario_id) [unique]
+    cliente_id
+    beneficiario_id
+  }
+}
+
+// ==================== DEPÓSITOS NO RECONOCIDOS ====================
+Table depositos_no_reconocidos {
+  id uuid [pk]
+  cuenta_empresa_austral_id uuid [not null]
+  cuenta varchar(50) [not null]
+  monto numeric(12,2) [not null]
+  concepto text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  estado_id int [not null]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    cuenta_empresa_austral_id
+    cuenta
+    monto
+    estado_id
+    created_at
+    (cuenta_empresa_austral_id, cuenta)
+    (estado_id, created_at)
+  }
+}
+
+// ==================== GASTOS ====================
+Table gastos {
+  id uuid [pk]
+  concepto varchar(200) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    concepto
+    created_at
+    created_by
+  }
+}
+
+// ==================== SOLICITUDES ====================
+Table solicitudes {
+  id uuid [pk]
+  cliente_id uuid
+  empresa_austral_id uuid
+  asociado_id uuid
+  beneficiario_id uuid
+  estado_id int [not null, default: 1]
+  etapa_actual varchar(50) [default: 'registro']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  updated_by uuid
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    cliente_id
+    empresa_austral_id
+    asociado_id
+    beneficiario_id
+    estado_id
+    created_by
+    (estado_id, created_at)
+    (asociado_id, estado_id)
+  }
+}
+
+// ==================== SOLICITUD DETALLE CLIENTE ====================
+Table solicitud_detalle_cliente {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  empresa_cliente varchar(150)
+  nombre_contacto varchar(150)
+  apellido_p_contacto varchar(150)
+  apellido_m_contacto varchar(150)
+  telefono varchar(20)
+  email varchar(150)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    solicitud_id [unique]
+  }
+}
+
+// ==================== SOLICITUD DEPÓSITO ====================
+Table solicitud_deposito {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  cuenta_empresa_austral_id uuid [not null]
+  cuenta_deposito varchar(50)
+  monto_depositado numeric(12,2) [not null]
+  fecha_deposito timestamp [not null]
+  referencia_deposito varchar(100)
+  ficha_url text
+  comentarios text
+  
+  indexes {
+    solicitud_id [unique]
+    cuenta_empresa_austral_id
+    fecha_deposito
+  }
+}
+
+// ==================== BENEFICIARIOS RETORNOS ====================
+Table beneficiarios_retornos {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  beneficiario_id uuid
+  nombre_beneficiario varchar(150)
+  apellido_p_beneficiario varchar(150)
+  apellido_m_beneficiario varchar(150)
+  monto_beneficiario numeric(12,2) [not null]
+  cuenta_bancaria_beneficiario_id uuid
+  metodo_pago varchar(20) [not null]
+  monto_pagado numeric(12,2)
+  comprobante_url text
+  fecha_pago timestamp
+  estado_pago_id int [default: 1]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    solicitud_id
+    beneficiario_id
+    cuenta_bancaria_beneficiario_id
+    metodo_pago
+    estado_pago_id
+    fecha_pago
+    (solicitud_id, beneficiario_id)
+    (estado_pago_id, fecha_pago)
+  }
+}
+
+// ==================== SOLICITUD RETORNO ====================
+Table solicitud_retorno {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  metodo_devolucion varchar(20) [not null]
+  cuenta_empresa_austral_id uuid
+  cuenta_retorno varchar(50)
+  clave_retorno varchar(50)
+  tarjeta_retorno varchar(50)
+  fecha_retorno timestamp
+  monto_retorno numeric(12,2)
+  
+  indexes {
+    solicitud_id [unique]
+    metodo_devolucion
+    cuenta_empresa_austral_id
+  }
+}
+
+// ==================== SOLICITUD COMISIONES ====================
+Table solicitud_comisiones {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  comision_asociado numeric(5,2) [default: 0.0]
+  comision_cliente numeric(5,2) [default: 0.0]
+  monto_comision_asociado numeric(12,2)
+  monto_comision_cliente numeric(12,2)
+  pagado_asociado boolean [default: false]
+  pagado_cliente boolean [default: false]
+  
+  indexes {
+    solicitud_id [unique]
+    pagado_asociado
+    pagado_cliente
+  }
+}
+
+// ==================== SOLICITUD HISTORIAL ====================
+Table solicitud_historial {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  estado_anterior_id int
+  estado_nuevo_id int [not null]
+  cambiado_por uuid [not null]
+  cambiado_en timestamp [default: `now()`]
+  motivo text
+  ip_address varchar(45)
+  user_agent text
+  
+  indexes {
+    solicitud_id
+    estado_nuevo_id
+    cambiado_en
+    (solicitud_id, cambiado_en)
+  }
+}
+
+// ==================== SOLICITUD CANCELACIONES ====================
+Table solicitud_cancelaciones {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  solicitado_por uuid [not null]
+  autorizado_por uuid
+  fecha_solicitud timestamp [default: `now()`]
+  fecha_autorizacion timestamp
+  motivo text
+  estado_id int [not null, default: 1]
+  
+  indexes {
+    solicitud_id
+    solicitado_por
+    autorizado_por
+    estado_id
+    fecha_solicitud
+    (solicitud_id, estado_id)
+    (fecha_solicitud, estado_id)
+  }
+}
+
+// ==================== SOLICITUD COMENTARIOS ====================
+Table solicitud_comentarios {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  escrito_por uuid [not null]
+  rol varchar(20) [not null]
+  comentario text [not null]
+  fecha_comentario timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    solicitud_id
+    escrito_por
+    rol
+    fecha_comentario
+    (solicitud_id, fecha_comentario)
+    (rol, fecha_comentario)
+  }
+}
+
+// ==================== SOLICITUD GASTOS ====================
+Table solicitud_gastos {
+  id uuid [pk]
+  gasto_id uuid [not null]
+  cuenta_empresa_austral_id uuid
+  monto numeric(12,2) [not null]
+  fecha_gasto timestamp
+  ficha_url text
+  comprobante_url text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  estado_id int [not null, default: 1]
+  pagado_por uuid
+  fecha_pago timestamp
+  notas text
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    gasto_id
+    cuenta_empresa_austral_id
+    estado_id
+    created_by
+    fecha_gasto
+    monto
+    (estado_id, created_at)
+    (gasto_id, estado_id)
+  }
+}
+
+// ==================== SOLICITUD GASTOS HISTORIAL ====================
+Table solicitud_gastos_historial {
+  id uuid [pk]
+  solicitud_gasto_id uuid [not null]
+  estado_anterior_id int
+  estado_nuevo_id int [not null]
+  cambiado_por uuid [not null]
+  cambiado_en timestamp [default: `now()`]
+  motivo text
+  ip_address varchar(45)
+  user_agent text
+  
+  indexes {
+    solicitud_gasto_id
+    estado_nuevo_id
+    cambiado_en
+    (solicitud_gasto_id, cambiado_en)
+    cambiado_por
+  }
+}
+
+// ==================== CUENTAS EMPRESA AUSTRAL ====================
+Table cuentas_empresa_austral {
+  id uuid [pk]
+  nombre_cuenta varchar(150) [not null] // Ej: 'Santander Operativa'
+  empresa_austral_id uuid [not null]
+  banco varchar(100) [not null]
+  numero_clabe varchar(50) [not null, unique]
+  clave_interbancaria varchar(50) [not null, unique]
+  tarjeta varchar(50) [unique]
+  saldo_actual numeric(14,2) [default: 0.00]
+  saldo_disponible numeric(14,2) [default: 0.00]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  is_active boolean [default: true]
+  deactivated_at timestamp
+  deactivated_by uuid
+  
+  indexes {
+    nombre_cuenta
+    empresa_austral_id
+    numero_cuenta [unique]
+    clave_interbancaria [unique]
+    saldo_actual
+    (empresa_austral_id, is_active)
+  }
+}
+
+// ==================== SOLICITUD FONDOS ====================
+Table solicitud_fondos {
+  id uuid [pk]
+  usuario_solicitante uuid [not null]
+  cuenta_empresa_austral_id uuid
+  cuenta varchar(50)
+  clave varchar(50)
+  tarjeta varchar(50)
+  monto_total numeric(12,2) [not null]
+  concepto text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  estado_id int [not null, default: 1]
+  autorizado_por uuid
+  autorizado_at timestamp
+  rechazado_por uuid
+  rechazado_at timestamp
+  motivo_rechazo text
+  
+  indexes {
+    usuario_solicitante
+    cuenta_empresa_austral_id
+    estado_id
+    created_at
+    monto_total
+    (estado_id, created_at)
+    (usuario_solicitante, estado_id)
+  }
+}
+
+// ==================== DESEMBOLSOS FONDOS ====================
+Table desembolsos_fondos {
+  id uuid [pk]
+  solicitud_fondos_id uuid [not null]
+  cuenta_empresa_austral_id uuid [not null]
+  monto_retirado numeric(12,2) [not null]
+  referencia_transaccion varchar(100)
+  comprobante_url text
+  fecha_pago timestamp [default: `now()`]
+  pagado_por uuid
+  metodo_pago varchar(20) [default: 'transferencia']
+  estado_pago_id int [default: 1]
+  
+  indexes {
+    solicitud_fondos_id
+    cuenta_empresa_austral_id
+    fecha_pago
+    referencia_transaccion
+    pagado_por
+    (solicitud_fondos_id, cuenta_empresa_austral_id)
+  }
+}
+
+// ==================== TRASPASOS ====================
+Table traspasos {
+  id uuid [pk]
+  cuenta_origen_id uuid [not null]
+  cuenta_destino_id uuid [not null]
+  monto numeric(12,2) [not null]
+  concepto varchar(200)
+  referencia varchar(100)
+  usuario_id uuid [not null]
+  fecha timestamp [default: `now()`]
+  comprobante_url text
+  estado_id int [default: 1]
+  notas text
+  
+  indexes {
+    cuenta_origen_id
+    cuenta_destino_id
+    usuario_id
+    fecha
+    referencia
+    monto
+    (cuenta_origen_id, fecha)
+    (cuenta_destino_id, fecha)
+  }
+}
+
+// ==================== PAGOS BENEFICIARIOS ====================
+Table pagos_beneficiarios {
+  id uuid [pk]
+  solicitud_id uuid [not null]
+  beneficiario_id uuid [not null]
+  cuenta_empresa_austral_id uuid [not null]
+  monto_pagado numeric(12,2) [not null]
+  comprobante_url text
+  fecha_pago timestamp [default: `now()`]
+  pagado_por uuid [not null]
+  estado_id int [default: 1]
+  
+  indexes {
+    solicitud_id
+    beneficiario_id
+    cuenta_empresa_austral_id
+    estado_id
+    fecha_pago
+    pagado_por
+    (solicitud_id, beneficiario_id) [unique]
+    (estado_id, fecha_pago)
+  }
+}
+
+// ==================== TABLAS DE MOVIMIENTOS SIMPLIFICADAS ====================
+
+Table movimientos_cuentas {
+  id uuid [pk]
+  transaccion_id uuid [not null]
+  cuenta_empresa_austral_id uuid [not null]
+  tipo varchar(10) [not null] // 'ENTRADA', 'SALIDA'
+  monto numeric(12,2) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    transaccion_id
+    cuenta_empresa_austral_id
+    created_at
+    (cuenta_empresa_austral_id, created_at)
+  }
+}
+
+Table movimientos_cliente {
+  id uuid [pk]
+  transaccion_id uuid [not null]
+  cuenta_bancaria_cliente_id uuid [not null]
+  tipo varchar(10) [not null] // 'ABONO', 'CARGO'
+  monto numeric(12,2) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    transaccion_id
+    cuenta_bancaria_cliente_id
+    created_at
+    (cuenta_bancaria_cliente_id, created_at)
+  }
+}
+
+Table movimientos_asociado_cliente {
+  id uuid [pk]
+  transaccion_id uuid [not null]
+  cliente_asociado_id uuid [not null]
+  tipo varchar(10) [not null] // 'A_FAVOR_CLIENTE', 'A_FAVOR_ASOCIADO'
+  monto numeric(12,2) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    transaccion_id
+    cliente_asociado_id
+    created_at
+    (cliente_asociado_id, created_at)
+  }
+}
+
+// ==================== TABLAS DE CACHÉ DE SALDOS MENSUALES ====================
+
+Table cache_saldos_cliente_mensual {
+  id uuid [pk]
+  cuenta_bancaria_cliente_id uuid [not null]
+  año int [not null]
+  mes int [not null] // 1-12
+  saldo_inicial numeric(12,2) [default: 0.00]
+  saldo_final numeric(12,2) [default: 0.00]
+  total_abonos numeric(12,2) [default: 0.00]
+  total_cargos numeric(12,2) [default: 0.00]
+  movimientos_count int [default: 0]
+  ultima_actualizacion timestamp [default: `now()`]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    cuenta_bancaria_cliente_id
+    año
+    mes
+    (cuenta_bancaria_cliente_id, año, mes) [unique]
+    (año, mes)
+    ultima_actualizacion
+  }
+}
+
+Table cache_saldos_asociado_cliente_mensual {
+  id uuid [pk]
+  cliente_asociado_id uuid [not null]
+  año int [not null]
+  mes int [not null] // 1-12
+  saldo_inicial numeric(12,2) [default: 0.00]
+  saldo_final numeric(12,2) [default: 0.00]
+  total_a_favor_cliente numeric(12,2) [default: 0.00]
+  total_a_favor_asociado numeric(12,2) [default: 0.00]
+  movimientos_count int [default: 0]
+  ultima_actualizacion timestamp [default: `now()`]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    cliente_asociado_id
+    año
+    mes
+    (cliente_asociado_id, año, mes) [unique]
+    (año, mes)
+    ultima_actualizacion
+  }
+}
+
+Table cache_saldos_cuentas_mensual {
+  id uuid [pk]
+  cuenta_empresa_austral_id uuid [not null]
+  año int [not null]
+  mes int [not null] // 1-12
+  saldo_inicial numeric(14,2) [default: 0.00]
+  saldo_final numeric(14,2) [default: 0.00]
+  total_entradas numeric(14,2) [default: 0.00]
+  total_salidas numeric(14,2) [default: 0.00]
+  movimientos_count int [default: 0]
+  ultima_actualizacion timestamp [default: `now()`]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    cuenta_empresa_austral_id
+    año
+    mes
+    (cuenta_empresa_austral_id, año, mes) [unique]
+    (año, mes)
+    ultima_actualizacion
+  }
+}
+
+// ==================== PAGOS TENIENTE ====================
+Table pagos_teniente {
+  id uuid [pk]
+  pago_beneficiario_id uuid [not null, unique]
+  beneficiario_id uuid [not null]
+  solicitud_id uuid [not null]
+  codigo_verificacion varchar(10) [not null]
+  intentos_fallidos int [default: 0]
+  max_intentos int [default: 3]
+  bloqueado_hasta timestamp
+  ultimo_intento_fallido timestamp
+  entregado_por uuid [not null]
+  receptor_tipo varchar(20) [not null, default: 'beneficiario']
+  receptor_nombre varchar(150)
+  identificacion_receptor varchar(50)
+  receptor_firma_url text
+  foto_comprobante_url text
+  latitud decimal(10, 8)
+  longitud decimal(11, 8)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  created_by uuid [not null]
+  updated_by uuid
+  estado_id int [not null, default: 1]
+  deactivated_at timestamp
+  deactivated_by uuid
+  observaciones text
+  
+  indexes {
+    pago_beneficiario_id [unique]
+    solicitud_id
+    beneficiario_id
+    entregado_por
+    estado_id
+    codigo_verificacion
+    created_by
+    (estado_id, created_at)
+    (solicitud_id, estado_id)
+    (beneficiario_id, estado_id)
+    bloqueado_hasta
+    receptor_tipo
+  }
+}
+
+// ==================== PAGOS TENIENTE HISTORIAL ====================
+Table pagos_teniente_historial {
+  id uuid [pk]
+  pago_teniente_id uuid [not null]
+  estado_anterior_id int
+  estado_nuevo_id int [not null]
+  evento varchar(50)
+  codigo_proporcionado varchar(10)
+  es_correcto boolean
+  cambiado_por uuid [not null]
+  cambiado_en timestamp [default: `now()`]
+  ip_origen varchar(45)
+  user_agent text
+  detalles jsonb
+  
+  indexes {
+    pago_teniente_id
+    estado_nuevo_id
+    cambiado_en
+    evento
+    (pago_teniente_id, cambiado_en)
+    cambiado_por
+  }
+}
+
+// ==================== CORTES DE CAJA ====================
+Table cortes_caja {
+  id uuid [pk]
+  usuario_id uuid [not null]
+  fecha_apertura timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  fecha_cierre timestamp
+  saldo_inicial numeric(14,2) [default: 0.00]
+  total_entradas numeric(14,2) [default: 0.00]
+  total_salidas numeric(14,2) [default: 0.00]
+  saldo_final_esperado numeric(14,2) [default: 0.00]
+  saldo_real_contado numeric(14,2)
+  diferencia numeric(14,2)
+  estado_id int [default: 1] // Abierto, Cerrado, Auditado
+  notas text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    usuario_id
+    fecha_apertura
+    estado_id
+    (usuario_id, estado_id)
+  }
+}
+
+Table arqueos_detalle {
+  id uuid [pk]
+  corte_id uuid [not null]
+  cuenta_empresa_austral_id uuid [not null]
+  saldo_sistema numeric(14,2) [not null]
+  saldo_real numeric(14,2) [not null]
+  diferencia numeric(14,2)
+  comentarios text
+
+  indexes {
+    corte_id
+    cuenta_empresa_austral_id
+    (corte_id, cuenta_empresa_austral_id) [unique]
+  }
+}
+
+// ==================== EVIDENCIAS ====================
+Table evidencias {
+  id uuid [pk]
+  entidad varchar(50) [not null]
+  entidad_id uuid [not null]
+  url text [not null]
+  tipo varchar(50)
+  nombre_archivo varchar(200)
+  uploaded_by uuid [not null]
+  uploaded_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  descripcion text
+  
+  indexes {
+    entidad
+    entidad_id
+    uploaded_by
+    uploaded_at
+    (entidad, entidad_id)
+    tipo
+  }
+}
+
+// ==================== RELACIONES ÚNICAS ====================
+
+// Transacciones
+Ref: transacciones.tipo_transaccion_id > tipos_transaccion.id
+Ref: transacciones.created_by > users.id
+Ref: transacciones.solicitud_id > solicitudes.id
+
+// Movimientos Cuentas Empresa
+Ref: movimientos_cuentas.transaccion_id > transacciones.id
+Ref: movimientos_cuentas.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+
+// Movimientos Cliente
+Ref: movimientos_cliente.transaccion_id > transacciones.id
+Ref: movimientos_cliente.cuenta_bancaria_cliente_id > cuentas_bancarias_clientes.id
+
+// Movimientos Asociado-Cliente
+Ref: movimientos_asociado_cliente.transaccion_id > transacciones.id
+Ref: movimientos_asociado_cliente.cliente_asociado_id > cliente_asociados.id
+
+// Cache de saldos
+Ref: cache_saldos_cliente_mensual.cuenta_bancaria_cliente_id > cuentas_bancarias_clientes.id
+Ref: cache_saldos_asociado_cliente_mensual.cliente_asociado_id > cliente_asociados.id
+Ref: cache_saldos_cuentas_mensual.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+
+// Usuarios y roles
+Ref: users.deactivated_by > users.id
+Ref: user_roles.user_id > users.id
+Ref: user_roles.role_id > roles.id
+Ref: password_history.user_id > users.id
+Ref: sessions.user_id > users.id
+
+// Empresas
+Ref: empresas_austral.created_by > users.id
+Ref: empresas_austral.deactivated_by > users.id
+Ref: empresas_internas.created_by > users.id
+Ref: empresas_internas.deactivated_by > users.id
+
+// Cuentas Bancarias
+
+// Tenientes
+Ref: tenientes.user_id > users.id
+Ref: tenientes.deactivated_by > users.id
+Ref: tenientes.created_by > users.id
+
+// Asociados
+Ref: asociados.user_id > users.id
+Ref: asociados.deactivated_by > users.id
+
+// Clientes
+Ref: clientes.deactivated_by > users.id
+
+// Cuentas Cliente
+Ref: cuentas_bancarias_clientes.cliente_id > clientes.id
+Ref: cuentas_bancarias_clientes.asociado_id > asociados.id
+Ref: cuentas_bancarias_clientes.created_by > users.id
+Ref: cuentas_bancarias_clientes.deactivated_by > users.id
+
+// Cliente-Asociados
+Ref: cliente_asociados.cliente_id > clientes.id
+Ref: cliente_asociados.asociado_id > asociados.id
+Ref: cliente_asociados.deactivated_by > users.id
+
+// Beneficiarios
+Ref: beneficiarios.user_id > users.id
+Ref: beneficiarios.deactivated_by > users.id
+
+// Cuentas Bancarias Beneficiarios
+Ref: cuentas_bancarias_beneficiarios.beneficiario_id > beneficiarios.id
+
+// Cliente-Beneficiarios
+Ref: cliente_beneficiarios.cliente_id > clientes.id
+Ref: cliente_beneficiarios.beneficiario_id > beneficiarios.id
+
+// Depósitos no reconocidos
+Ref: depositos_no_reconocidos.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+Ref: depositos_no_reconocidos.created_by > users.id
+Ref: depositos_no_reconocidos.deactivated_by > users.id
+Ref: depositos_no_reconocidos.estado_id > cat_estados.id
+
+// Gastos
+Ref: gastos.created_by > users.id
+Ref: gastos.deactivated_by > users.id
+
+// Solicitudes
+Ref: solicitudes.cliente_id > clientes.id
+Ref: solicitudes.empresa_austral_id > empresas_austral.id
+Ref: solicitudes.asociado_id > asociados.id
+Ref: solicitudes.beneficiario_id > beneficiarios.id
+Ref: solicitudes.created_by > users.id
+Ref: solicitudes.updated_by > users.id
+Ref: solicitudes.deactivated_by > users.id
+Ref: solicitudes.estado_id > cat_estados.id
+
+// Detalles de solicitudes
+Ref: solicitud_detalle_cliente.solicitud_id > solicitudes.id
+Ref: solicitud_deposito.solicitud_id > solicitudes.id
+Ref: solicitud_deposito.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+
+// Beneficiarios Retornos
+Ref: beneficiarios_retornos.solicitud_id > solicitudes.id
+Ref: beneficiarios_retornos.beneficiario_id > beneficiarios.id
+Ref: beneficiarios_retornos.cuenta_bancaria_beneficiario_id > cuentas_bancarias_beneficiarios.id
+Ref: beneficiarios_retornos.estado_pago_id > cat_estados.id
+
+// Solicitud Retorno
+Ref: solicitud_retorno.solicitud_id > solicitudes.id
+Ref: solicitud_retorno.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+
+// Solicitud Comisiones
+Ref: solicitud_comisiones.solicitud_id > solicitudes.id
+
+// Solicitud Historial
+Ref: solicitud_historial.solicitud_id > solicitudes.id
+Ref: solicitud_historial.cambiado_por > users.id
+Ref: solicitud_historial.estado_anterior_id > cat_estados.id
+Ref: solicitud_historial.estado_nuevo_id > cat_estados.id
+
+// Cancelaciones y comentarios
+Ref: solicitud_cancelaciones.solicitud_id > solicitudes.id
+Ref: solicitud_cancelaciones.solicitado_por > users.id
+Ref: solicitud_cancelaciones.autorizado_por > users.id
+Ref: solicitud_cancelaciones.estado_id > cat_estados.id
+Ref: solicitud_comentarios.solicitud_id > solicitudes.id
+Ref: solicitud_comentarios.escrito_por > users.id
+
+// Solicitud gastos
+Ref: solicitud_gastos.gasto_id > gastos.id
+Ref: solicitud_gastos.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+Ref: solicitud_gastos.created_by > users.id
+Ref: solicitud_gastos.pagado_por > users.id
+Ref: solicitud_gastos.deactivated_by > users.id
+Ref: solicitud_gastos.estado_id > cat_estados.id
+
+// Historial de gastos
+Ref: solicitud_gastos_historial.solicitud_gasto_id > solicitud_gastos.id
+Ref: solicitud_gastos_historial.cambiado_por > users.id
+Ref: solicitud_gastos_historial.estado_anterior_id > cat_estados.id
+Ref: solicitud_gastos_historial.estado_nuevo_id > cat_estados.id
+
+// Cuentas empresa
+Ref: cuentas_empresa_austral.empresa_austral_id > empresas_austral.id
+Ref: cuentas_empresa_austral.created_by > users.id
+Ref: cuentas_empresa_austral.deactivated_by > users.id
+
+// Solicitud fondos
+Ref: solicitud_fondos.usuario_solicitante > users.id
+Ref: solicitud_fondos.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+Ref: solicitud_fondos.created_by > users.id
+Ref: solicitud_fondos.autorizado_por > users.id
+Ref: solicitud_fondos.rechazado_por > users.id
+Ref: solicitud_fondos.estado_id > cat_estados.id
+
+// Desembolsos fondos
+Ref: desembolsos_fondos.solicitud_fondos_id > solicitud_fondos.id
+Ref: desembolsos_fondos.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+Ref: desembolsos_fondos.pagado_por > users.id
+Ref: desembolsos_fondos.estado_pago_id > cat_estados.id
+
+// Traspasos
+Ref: traspasos.cuenta_origen_id > cuentas_empresa_austral.id
+Ref: traspasos.cuenta_destino_id > cuentas_empresa_austral.id
+Ref: traspasos.usuario_id > users.id
+Ref: traspasos.estado_id > cat_estados.id
+
+// Pagos a beneficiarios
+Ref: pagos_beneficiarios.solicitud_id > solicitudes.id
+Ref: pagos_beneficiarios.beneficiario_id > beneficiarios.id
+Ref: pagos_beneficiarios.cuenta_empresa_austral_id > cuentas_empresa_austral.id
+Ref: pagos_beneficiarios.pagado_por > users.id
+Ref: pagos_beneficiarios.estado_id > cat_estados.id
+
+// Pagos teniente
+Ref: pagos_teniente.pago_beneficiario_id > pagos_beneficiarios.id
+Ref: pagos_teniente.beneficiario_id > beneficiarios.id
+Ref: pagos_teniente.solicitud_id > solicitudes.id
+Ref: pagos_teniente.entregado_por > users.id
+Ref: pagos_teniente.created_by > users.id
+Ref: pagos_teniente.updated_by > users.id
+Ref: pagos_teniente.deactivated_by > users.id
+Ref: pagos_teniente.estado_id > cat_estados.id
+
+// Historial pagos teniente
+Ref: pagos_teniente_historial.pago_teniente_id > pagos_teniente.id
+Ref: pagos_teniente_historial.cambiado_por > users.id
+Ref: pagos_teniente_historial.estado_anterior_id > cat_estados.id
+Ref: pagos_teniente_historial.estado_nuevo_id > cat_estados.id
+
+// Evidencias
+Ref: evidencias.uploaded_by > users.id
+
+// Cortes de Caja
+Ref: cortes_caja.usuario_id > users.id
+Ref: cortes_caja.estado_id > cat_estados.id
+Ref: arqueos_detalle.corte_id > cortes_caja.id
+Ref: arqueos_detalle.cuenta_empresa_austral_id > cuentas_empresa_austral.id
