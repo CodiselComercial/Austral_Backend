@@ -17,6 +17,9 @@ const swaggerSpec = {
     { name: 'Auth', description: 'Registro, login y logout' },
     { name: 'Users', description: 'Gestión de usuarios' },
     { name: 'Roles', description: 'Catálogo de roles' },
+    { name: 'Empresas Austral', description: 'Catálogo de empresas Austral' },
+    { name: 'Empresas Internas', description: 'Catálogo de empresas internas' },
+    { name: 'Cuentas Empresa Austral', description: 'Cuentas bancarias por empresa Austral' },
   ],
   components: {
     securitySchemes: {
@@ -56,6 +59,90 @@ const swaggerSpec = {
           description: { type: 'string', example: 'Administrador del sistema' },
           created_at: { type: 'string', format: 'date-time' },
           updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      EmpresaAustral: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          nombre: { type: 'string', example: 'Austral Operaciones' },
+          created_by: { type: 'string', format: 'uuid' },
+          is_active: { type: 'boolean', example: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+          deactivated_at: { type: 'string', format: 'date-time', nullable: true },
+          deactivated_by: { type: 'string', format: 'uuid', nullable: true },
+        },
+      },
+      EmpresaInterna: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          nombre: { type: 'string', example: 'División Norte' },
+          created_by: { type: 'string', format: 'uuid' },
+          is_active: { type: 'boolean', example: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+          deactivated_at: { type: 'string', format: 'date-time', nullable: true },
+          deactivated_by: { type: 'string', format: 'uuid', nullable: true },
+        },
+      },
+      CuentaEmpresaAustral: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          nombre_cuenta: { type: 'string', example: 'Santander Operativa' },
+          empresa_austral_id: { type: 'string', format: 'uuid' },
+          empresa_austral_nombre: { type: 'string', example: 'Austral Operaciones', nullable: true },
+          banco: { type: 'string', example: 'Santander' },
+          numero_clabe: { type: 'string', example: '014180655555555555' },
+          clave_interbancaria: { type: 'string', example: '014180655555555555' },
+          tarjeta: { type: 'string', example: '4111111111111111', nullable: true },
+          saldo_actual: { type: 'string', example: '0.00' },
+          saldo_disponible: { type: 'string', example: '0.00' },
+          created_by: { type: 'string', format: 'uuid' },
+          is_active: { type: 'boolean', example: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+          deactivated_at: { type: 'string', format: 'date-time', nullable: true },
+          deactivated_by: { type: 'string', format: 'uuid', nullable: true },
+        },
+      },
+      CreateEmpresaAustralRequest: {
+        type: 'object',
+        required: ['nombre'],
+        properties: {
+          nombre: { type: 'string', maxLength: 150, example: 'Austral Operaciones' },
+        },
+      },
+      CreateEmpresaInternaRequest: {
+        type: 'object',
+        required: ['nombre'],
+        properties: {
+          nombre: { type: 'string', maxLength: 150, example: 'División Norte' },
+        },
+      },
+      CreateCuentaEmpresaAustralRequest: {
+        type: 'object',
+        required: ['nombre_cuenta', 'empresa_austral_id', 'banco', 'numero_clabe', 'clave_interbancaria'],
+        properties: {
+          nombre_cuenta: { type: 'string', maxLength: 150, example: 'Santander Operativa' },
+          empresa_austral_id: { type: 'string', format: 'uuid' },
+          banco: { type: 'string', maxLength: 100, example: 'Santander' },
+          numero_clabe: { type: 'string', maxLength: 50, example: '014180655555555555' },
+          clave_interbancaria: { type: 'string', maxLength: 50, example: '014180655555555555' },
+          tarjeta: { type: 'string', maxLength: 50, nullable: true },
+          saldo_inicial: { type: 'number', format: 'float', minimum: 0, example: 0 },
+        },
+      },
+      UpdateCuentaEmpresaAustralRequest: {
+        type: 'object',
+        properties: {
+          nombre_cuenta: { type: 'string', maxLength: 150 },
+          banco: { type: 'string', maxLength: 100 },
+          numero_clabe: { type: 'string', maxLength: 50 },
+          clave_interbancaria: { type: 'string', maxLength: 50 },
+          tarjeta: { type: 'string', maxLength: 50, nullable: true },
         },
       },
       RegisterRequest: {
@@ -295,6 +382,157 @@ const swaggerSpec = {
           401: { description: 'No autenticado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
           403: { description: 'Sin permisos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
         },
+      },
+    },
+    '/empresas-austral': {
+      get: {
+        tags: ['Empresas Austral'],
+        summary: 'Listar empresas Austral',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Empresas Austral'],
+        summary: 'Crear empresa Austral',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CreateEmpresaAustralRequest' } },
+          },
+        },
+        responses: { 201: { description: 'Creada' } },
+      },
+    },
+    '/empresas-austral/{id}': {
+      get: {
+        tags: ['Empresas Austral'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' }, 404: { description: 'No encontrada' } },
+      },
+      put: {
+        tags: ['Empresas Austral'],
+        summary: 'Actualizar',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CreateEmpresaAustralRequest' } },
+          },
+        },
+        responses: { 200: { description: 'OK' } },
+      },
+      delete: {
+        tags: ['Empresas Austral'],
+        summary: 'Desactivar',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' }, 400: { description: 'Tiene cuentas activas' } },
+      },
+    },
+    '/empresas-internas': {
+      get: {
+        tags: ['Empresas Internas'],
+        summary: 'Listar empresas internas',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Empresas Internas'],
+        summary: 'Crear empresa interna',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CreateEmpresaInternaRequest' } },
+          },
+        },
+        responses: { 201: { description: 'Creada' } },
+      },
+    },
+    '/empresas-internas/{id}': {
+      get: {
+        tags: ['Empresas Internas'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Empresas Internas'],
+        summary: 'Actualizar',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CreateEmpresaInternaRequest' } },
+          },
+        },
+        responses: { 200: { description: 'OK' } },
+      },
+      delete: {
+        tags: ['Empresas Internas'],
+        summary: 'Desactivar',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+    },
+    '/cuentas-empresa-austral': {
+      get: {
+        tags: ['Cuentas Empresa Austral'],
+        summary: 'Listar cuentas',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
+          { name: 'empresa_austral_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Cuentas Empresa Austral'],
+        summary: 'Crear cuenta',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CreateCuentaEmpresaAustralRequest' } },
+          },
+        },
+        responses: { 201: { description: 'Creada' } },
+      },
+    },
+    '/cuentas-empresa-austral/{id}': {
+      get: {
+        tags: ['Cuentas Empresa Austral'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Cuentas Empresa Austral'],
+        summary: 'Actualizar (sin modificar saldos)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/UpdateCuentaEmpresaAustralRequest' } },
+          },
+        },
+        responses: { 200: { description: 'OK' } },
+      },
+      delete: {
+        tags: ['Cuentas Empresa Austral'],
+        summary: 'Desactivar (solo saldo 0)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' }, 400: { description: 'Saldo distinto de cero' } },
       },
     },
   },
