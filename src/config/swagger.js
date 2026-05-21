@@ -9,8 +9,8 @@ const swaggerSpec = {
       'Documentación de la API del backend Austral. Usa **Authorize** con el token JWT (Bearer) para probar endpoints protegidos.',
   },
   servers: [
-    { url: 'http://localhost:3000', description: 'Local' },
-    { url: 'http://localhost:3000', description: 'Docker' },
+    { url: 'http://localhost:3000', description: 'Local (npm run dev)' },
+    { url: 'http://localhost:3001', description: 'Docker (npm run docker:up)' },
   ],
   tags: [
     { name: 'Health', description: 'Estado del servicio' },
@@ -20,6 +20,9 @@ const swaggerSpec = {
     { name: 'Empresas Austral', description: 'Catálogo de empresas Austral' },
     { name: 'Empresas Internas', description: 'Catálogo de empresas internas' },
     { name: 'Cuentas Empresa Austral', description: 'Cuentas bancarias por empresa Austral' },
+    { name: 'Asociados', description: 'Asociados comerciales del sistema' },
+    { name: 'Tenientes', description: 'Tenientes operativos' },
+    { name: 'Beneficiarios', description: 'Beneficiarios de pagos y retornos' },
   ],
   components: {
     securitySchemes: {
@@ -144,6 +147,101 @@ const swaggerSpec = {
           clave_interbancaria: { type: 'string', maxLength: 50 },
           tarjeta: { type: 'string', maxLength: 50, nullable: true },
         },
+      },
+      PersonaUserCredentials: {
+        type: 'object',
+        required: ['username', 'email', 'password'],
+        properties: {
+          username: { type: 'string', minLength: 3, example: 'jperez' },
+          email: { type: 'string', format: 'email', example: 'jperez@austral.com' },
+          password: { type: 'string', minLength: 8, example: 'MiPassword1!' },
+        },
+      },
+      Asociado: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          nombre: { type: 'string' },
+          apellido_p: { type: 'string' },
+          apellido_m: { type: 'string', nullable: true },
+          celular: { type: 'string' },
+          correo: { type: 'string', format: 'email' },
+          comision: { type: 'string', example: '5.00' },
+          user_id: { type: 'string', format: 'uuid' },
+          username: { type: 'string' },
+          user_email: { type: 'string', format: 'email' },
+          is_active: { type: 'boolean' },
+        },
+      },
+      CreateAsociadoRequest: {
+        allOf: [
+          { $ref: '#/components/schemas/PersonaUserCredentials' },
+          {
+            type: 'object',
+            required: ['nombre', 'apellido_p', 'celular', 'correo', 'comision'],
+            properties: {
+              nombre: { type: 'string', maxLength: 150 },
+              apellido_p: { type: 'string', maxLength: 150 },
+              apellido_m: { type: 'string', maxLength: 150, nullable: true },
+              celular: { type: 'string', maxLength: 20 },
+              correo: { type: 'string', format: 'email', maxLength: 150 },
+              comision: { type: 'number', minimum: 0, maximum: 100, example: 5 },
+            },
+          },
+        ],
+      },
+      Teniente: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          nombre: { type: 'string' },
+          telefono: { type: 'string' },
+          user_id: { type: 'string', format: 'uuid' },
+          username: { type: 'string' },
+          user_email: { type: 'string', format: 'email' },
+          created_by: { type: 'string', format: 'uuid', nullable: true },
+          is_active: { type: 'boolean' },
+        },
+      },
+      CreateTenienteRequest: {
+        allOf: [
+          { $ref: '#/components/schemas/PersonaUserCredentials' },
+          {
+            type: 'object',
+            required: ['nombre', 'telefono'],
+            properties: {
+              nombre: { type: 'string', maxLength: 150 },
+              telefono: { type: 'string', maxLength: 20 },
+            },
+          },
+        ],
+      },
+      Beneficiario: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          nombre: { type: 'string' },
+          apellido_p: { type: 'string' },
+          apellido_m: { type: 'string', nullable: true },
+          user_id: { type: 'string', format: 'uuid' },
+          username: { type: 'string' },
+          user_email: { type: 'string', format: 'email' },
+          is_active: { type: 'boolean' },
+        },
+      },
+      CreateBeneficiarioRequest: {
+        allOf: [
+          { $ref: '#/components/schemas/PersonaUserCredentials' },
+          {
+            type: 'object',
+            required: ['nombre', 'apellido_p'],
+            properties: {
+              nombre: { type: 'string', maxLength: 150 },
+              apellido_p: { type: 'string', maxLength: 150 },
+              apellido_m: { type: 'string', maxLength: 150, nullable: true },
+            },
+          },
+        ],
       },
       RegisterRequest: {
         type: 'object',
@@ -534,6 +632,75 @@ const swaggerSpec = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
         responses: { 200: { description: 'OK' }, 400: { description: 'Saldo distinto de cero' } },
       },
+    },
+    '/asociados': {
+      get: {
+        tags: ['Asociados'],
+        summary: 'Listar asociados',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Asociados'],
+        summary: 'Crear asociado (crea usuario + rol ASOCIADO)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateAsociadoRequest' } } },
+        },
+        responses: { 201: { description: 'Creado' } },
+      },
+    },
+    '/asociados/{id}': {
+      get: { tags: ['Asociados'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      put: { tags: ['Asociados'], summary: 'Actualizar', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Asociados'], summary: 'Desactivar asociado y usuario', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+    },
+    '/tenientes': {
+      get: {
+        tags: ['Tenientes'],
+        summary: 'Listar tenientes',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Tenientes'],
+        summary: 'Crear teniente (crea usuario + rol TENIENTE)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateTenienteRequest' } } },
+        },
+        responses: { 201: { description: 'Creado' } },
+      },
+    },
+    '/tenientes/{id}': {
+      get: { tags: ['Tenientes'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      put: { tags: ['Tenientes'], summary: 'Actualizar', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Tenientes'], summary: 'Desactivar teniente y usuario', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+    },
+    '/beneficiarios': {
+      get: {
+        tags: ['Beneficiarios'],
+        summary: 'Listar beneficiarios',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Beneficiarios'],
+        summary: 'Crear beneficiario (crea usuario + rol BENEFICIARIO)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateBeneficiarioRequest' } } },
+        },
+        responses: { 201: { description: 'Creado' } },
+      },
+    },
+    '/beneficiarios/{id}': {
+      get: { tags: ['Beneficiarios'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      put: { tags: ['Beneficiarios'], summary: 'Actualizar', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Beneficiarios'], summary: 'Desactivar beneficiario y usuario', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
     },
   },
 };

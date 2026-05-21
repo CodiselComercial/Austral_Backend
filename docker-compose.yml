@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - '5432:5432'
+      - '5434:5432'
     volumes:
       - austral_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: austral-api
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '3001:3000'
     environment:
       PORT: 3000
       NODE_ENV: development

@@ -9,6 +9,9 @@ const roleRoutes = require('./modules/roles/role.routes');
 const empresaAustralRoutes = require('./modules/empresas-austral/empresaAustral.routes');
 const empresaInternaRoutes = require('./modules/empresas-internas/empresaInterna.routes');
 const cuentaEmpresaAustralRoutes = require('./modules/cuentas-empresa-austral/cuentaEmpresaAustral.routes');
+const asociadoRoutes = require('./modules/asociados/asociado.routes');
+const tenienteRoutes = require('./modules/tenientes/teniente.routes');
+const beneficiarioRoutes = require('./modules/beneficiarios/beneficiario.routes');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 const { setupSwagger } = require('./config/swagger');
 
@@ -37,6 +40,9 @@ const createApp = () => {
   app.use('/empresas-austral', empresaAustralRoutes);
   app.use('/empresas-internas', empresaInternaRoutes);
   app.use('/cuentas-empresa-austral', cuentaEmpresaAustralRoutes);
+  app.use('/asociados', asociadoRoutes);
+  app.use('/tenientes', tenienteRoutes);
+  app.use('/beneficiarios', beneficiarioRoutes);
 
   app.use((req, res) => {
     res.status(404).json({

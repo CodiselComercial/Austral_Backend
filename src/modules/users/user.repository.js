@@ -44,6 +44,19 @@ class UserRepository {
       .update({ ...userData, updated_at: this.db.fn.now() })
       .returning(UserModel.publicColumns);
   }
+
+  deactivate(id, deactivatedBy, trx = null) {
+    const query = trx ? trx(this.table) : this.db(this.table);
+    return query
+      .where({ id, is_active: true })
+      .update({
+        is_active: false,
+        deactivated_at: this.db.fn.now(),
+        deactivated_by: deactivatedBy,
+        updated_at: this.db.fn.now(),
+      })
+      .returning(UserModel.publicColumns);
+  }
 }
 
 module.exports = UserRepository;
