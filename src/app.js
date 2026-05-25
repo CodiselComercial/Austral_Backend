@@ -12,6 +12,10 @@ const cuentaEmpresaAustralRoutes = require('./modules/cuentas-empresa-austral/cu
 const asociadoRoutes = require('./modules/asociados/asociado.routes');
 const tenienteRoutes = require('./modules/tenientes/teniente.routes');
 const beneficiarioRoutes = require('./modules/beneficiarios/beneficiario.routes');
+const clienteRoutes = require('./modules/clientes/cliente.routes');
+const clienteAsociadoRoutes = require('./modules/cliente-asociados/clienteAsociado.routes');
+const cuentaBancariaClienteRoutes = require('./modules/cuentas-bancarias-clientes/cuentaBancariaCliente.routes');
+const clienteBeneficiarioRoutes = require('./modules/cliente-beneficiarios/clienteBeneficiario.routes');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 const { setupSwagger } = require('./config/swagger');
 
@@ -43,6 +47,10 @@ const createApp = () => {
   app.use('/asociados', asociadoRoutes);
   app.use('/tenientes', tenienteRoutes);
   app.use('/beneficiarios', beneficiarioRoutes);
+  app.use('/clientes', clienteRoutes);
+  app.use('/cliente-asociados', clienteAsociadoRoutes);
+  app.use('/cuentas-bancarias-clientes', cuentaBancariaClienteRoutes);
+  app.use('/cliente-beneficiarios', clienteBeneficiarioRoutes);
 
   app.use((req, res) => {
     res.status(404).json({

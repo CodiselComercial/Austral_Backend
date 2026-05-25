@@ -23,6 +23,10 @@ const swaggerSpec = {
     { name: 'Asociados', description: 'Asociados comerciales del sistema' },
     { name: 'Tenientes', description: 'Tenientes operativos' },
     { name: 'Beneficiarios', description: 'Beneficiarios de pagos y retornos' },
+    { name: 'Clientes', description: 'Clientes del sistema' },
+    { name: 'Cliente Asociados', description: 'Vínculo cliente ↔ asociado' },
+    { name: 'Cuentas Bancarias Clientes', description: 'Cuentas bancarias por cliente' },
+    { name: 'Cliente Beneficiarios', description: 'Vínculo cliente ↔ beneficiario' },
   ],
   components: {
     securitySchemes: {
@@ -242,6 +246,85 @@ const swaggerSpec = {
             },
           },
         ],
+      },
+      Cliente: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          empresa: { type: 'string', example: 'Comercializadora Norte SA' },
+          nombre_contacto: { type: 'string' },
+          apellido_p_contacto: { type: 'string' },
+          apellido_m_contacto: { type: 'string', nullable: true },
+          telefono1: { type: 'string' },
+          correo1: { type: 'string', format: 'email' },
+          ciudad: { type: 'string' },
+          estado: { type: 'string' },
+          comision: { type: 'string', example: '0.00' },
+          is_active: { type: 'boolean' },
+        },
+      },
+      CreateClienteRequest: {
+        type: 'object',
+        required: [
+          'empresa',
+          'nombre_contacto',
+          'apellido_p_contacto',
+          'telefono1',
+          'correo1',
+          'calle',
+          'num_exterior',
+          'ciudad',
+          'estado',
+          'codigo_postal',
+        ],
+        properties: {
+          empresa: { type: 'string', maxLength: 150 },
+          nombre_contacto: { type: 'string', maxLength: 150 },
+          apellido_p_contacto: { type: 'string', maxLength: 150 },
+          apellido_m_contacto: { type: 'string', maxLength: 150, nullable: true },
+          telefono1: { type: 'string', maxLength: 20 },
+          telefono2: { type: 'string', maxLength: 20, nullable: true },
+          correo1: { type: 'string', format: 'email', maxLength: 150 },
+          correo2: { type: 'string', format: 'email', maxLength: 150, nullable: true },
+          calle: { type: 'string', maxLength: 150 },
+          num_exterior: { type: 'string', maxLength: 20 },
+          num_interior: { type: 'string', maxLength: 20, nullable: true },
+          colonia: { type: 'string', maxLength: 150, nullable: true },
+          municipio: { type: 'string', maxLength: 150, nullable: true },
+          ciudad: { type: 'string', maxLength: 150 },
+          estado: { type: 'string', maxLength: 150 },
+          pais: { type: 'string', maxLength: 100, example: 'México' },
+          codigo_postal: { type: 'string', maxLength: 10 },
+          rfc: { type: 'string', maxLength: 13, nullable: true },
+          comision: { type: 'number', minimum: 0, maximum: 100, example: 0 },
+        },
+      },
+      CreateClienteAsociadoRequest: {
+        type: 'object',
+        required: ['cliente_id', 'asociado_id'],
+        properties: {
+          cliente_id: { type: 'string', format: 'uuid' },
+          asociado_id: { type: 'string', format: 'uuid' },
+        },
+      },
+      CreateCuentaBancariaClienteRequest: {
+        type: 'object',
+        required: ['cliente_id', 'numero_cuenta'],
+        properties: {
+          cliente_id: { type: 'string', format: 'uuid' },
+          asociado_id: { type: 'string', format: 'uuid', nullable: true },
+          alias: { type: 'string', maxLength: 100, example: 'Cuenta Principal' },
+          numero_cuenta: { type: 'string', maxLength: 50 },
+          limite_credito: { type: 'number', minimum: 0, example: 0 },
+        },
+      },
+      CreateClienteBeneficiarioRequest: {
+        type: 'object',
+        required: ['cliente_id', 'beneficiario_id'],
+        properties: {
+          cliente_id: { type: 'string', format: 'uuid' },
+          beneficiario_id: { type: 'string', format: 'uuid' },
+        },
       },
       RegisterRequest: {
         type: 'object',
@@ -701,6 +784,107 @@ const swaggerSpec = {
       get: { tags: ['Beneficiarios'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
       put: { tags: ['Beneficiarios'], summary: 'Actualizar', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
       delete: { tags: ['Beneficiarios'], summary: 'Desactivar beneficiario y usuario', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+    },
+    '/clientes': {
+      get: {
+        tags: ['Clientes'],
+        summary: 'Listar clientes',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Clientes'],
+        summary: 'Crear cliente',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateClienteRequest' } } },
+        },
+        responses: { 201: { description: 'Creado' } },
+      },
+    },
+    '/clientes/{id}': {
+      get: { tags: ['Clientes'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      put: { tags: ['Clientes'], summary: 'Actualizar', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Clientes'], summary: 'Desactivar (sin cuentas activas)', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' }, 400: { description: 'Tiene cuentas activas' } } },
+    },
+    '/cliente-asociados': {
+      get: {
+        tags: ['Cliente Asociados'],
+        summary: 'Listar vínculos cliente-asociado',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
+          { name: 'cliente_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'asociado_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Cliente Asociados'],
+        summary: 'Asignar asociado a cliente',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateClienteAsociadoRequest' } } },
+        },
+        responses: { 201: { description: 'Asignado' } },
+      },
+    },
+    '/cliente-asociados/{id}': {
+      get: { tags: ['Cliente Asociados'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Cliente Asociados'], summary: 'Desactivar vínculo', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+    },
+    '/cuentas-bancarias-clientes': {
+      get: {
+        tags: ['Cuentas Bancarias Clientes'],
+        summary: 'Listar cuentas de clientes',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
+          { name: 'cliente_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'asociado_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Cuentas Bancarias Clientes'],
+        summary: 'Crear cuenta bancaria de cliente',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateCuentaBancariaClienteRequest' } } },
+        },
+        responses: { 201: { description: 'Creada' } },
+      },
+    },
+    '/cuentas-bancarias-clientes/{id}': {
+      get: { tags: ['Cuentas Bancarias Clientes'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      put: { tags: ['Cuentas Bancarias Clientes'], summary: 'Actualizar (sin modificar saldos)', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Cuentas Bancarias Clientes'], summary: 'Desactivar (solo saldo 0)', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: { description: 'OK' }, 400: { description: 'Saldo distinto de cero' } } },
+    },
+    '/cliente-beneficiarios': {
+      get: {
+        tags: ['Cliente Beneficiarios'],
+        summary: 'Listar asignaciones cliente-beneficiario',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'cliente_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'beneficiario_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Cliente Beneficiarios'],
+        summary: 'Asignar beneficiario a cliente',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateClienteBeneficiarioRequest' } } },
+        },
+        responses: { 201: { description: 'Asignado' } },
+      },
+    },
+    '/cliente-beneficiarios/{id}': {
+      get: { tags: ['Cliente Beneficiarios'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'OK' } } },
+      delete: { tags: ['Cliente Beneficiarios'], summary: 'Eliminar asignación', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'OK' } } },
     },
   },
 };
