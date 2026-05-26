@@ -112,6 +112,6 @@ npm run setup && npm run dev
 
 Swagger: http://localhost:3000/api-docs
 
-## Pendiente (fase 5+)
+## Pendiente (fase 6+)
 
-cuentas bancarias beneficiarios, solicitudes, pagos, gastos, movimientos, transacciones, cortes, evidencias.
+Ver `FASE5.md` (solicitudes implementadas). Siguiente: beneficiarios_retornos, aprobaciones, pagos, gastos, movimientos, transacciones, cortes, evidencias.

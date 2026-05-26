@@ -27,6 +27,12 @@ const swaggerSpec = {
     { name: 'Cliente Asociados', description: 'Vínculo cliente ↔ asociado' },
     { name: 'Cuentas Bancarias Clientes', description: 'Cuentas bancarias por cliente' },
     { name: 'Cliente Beneficiarios', description: 'Vínculo cliente ↔ beneficiario' },
+    { name: 'Solicitudes', description: 'Solicitudes (core del sistema)' },
+    { name: 'Solicitud Detalle Cliente', description: 'Datos de contacto del cliente en la solicitud' },
+    { name: 'Solicitud Depósito', description: 'Depósito asociado a la solicitud' },
+    { name: 'Solicitud Comentarios', description: 'Comentarios de la solicitud' },
+    { name: 'Solicitud Historial', description: 'Historial de cambios de estado' },
+    { name: 'Solicitud Comisiones', description: 'Comisiones de asociado y cliente' },
   ],
   components: {
     securitySchemes: {
@@ -324,6 +330,237 @@ const swaggerSpec = {
         properties: {
           cliente_id: { type: 'string', format: 'uuid' },
           beneficiario_id: { type: 'string', format: 'uuid' },
+        },
+      },
+      Solicitud: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          cliente_id: { type: 'string', format: 'uuid', nullable: true },
+          cliente_empresa: { type: 'string', nullable: true },
+          empresa_austral_id: { type: 'string', format: 'uuid', nullable: true },
+          empresa_austral_nombre: { type: 'string', nullable: true },
+          asociado_id: { type: 'string', format: 'uuid', nullable: true },
+          asociado_nombre: { type: 'string', nullable: true },
+          beneficiario_id: { type: 'string', format: 'uuid', nullable: true },
+          beneficiario_nombre: { type: 'string', nullable: true },
+          estado_id: { type: 'integer', example: 1 },
+          estado_codigo: { type: 'string', example: 'PENDIENTE' },
+          estado_nombre: { type: 'string', example: 'Pendiente' },
+          etapa_actual: { type: 'string', example: 'registro' },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+          created_by: { type: 'string', format: 'uuid' },
+          deactivated_at: { type: 'string', format: 'date-time', nullable: true },
+        },
+      },
+      SolicitudDetalle: {
+        allOf: [
+          { $ref: '#/components/schemas/Solicitud' },
+          {
+            type: 'object',
+            properties: {
+              detalle_cliente: { $ref: '#/components/schemas/SolicitudDetalleCliente', nullable: true },
+              deposito: { $ref: '#/components/schemas/SolicitudDeposito', nullable: true },
+              comisiones: { $ref: '#/components/schemas/SolicitudComision', nullable: true },
+              comentarios: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/SolicitudComentario' },
+              },
+              historial: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/SolicitudHistorial' },
+              },
+            },
+          },
+        ],
+      },
+      CreateSolicitudRequest: {
+        type: 'object',
+        description: 'Al menos uno de los IDs es requerido',
+        properties: {
+          cliente_id: { type: 'string', format: 'uuid' },
+          empresa_austral_id: { type: 'string', format: 'uuid' },
+          asociado_id: { type: 'string', format: 'uuid' },
+          beneficiario_id: { type: 'string', format: 'uuid' },
+        },
+      },
+      SolicitudDetalleCliente: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          empresa_cliente: { type: 'string', nullable: true },
+          nombre_contacto: { type: 'string', nullable: true },
+          apellido_p_contacto: { type: 'string', nullable: true },
+          apellido_m_contacto: { type: 'string', nullable: true },
+          telefono: { type: 'string', nullable: true },
+          email: { type: 'string', format: 'email', nullable: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateSolicitudDetalleClienteRequest: {
+        type: 'object',
+        required: ['solicitud_id'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          empresa_cliente: { type: 'string', maxLength: 150, nullable: true },
+          nombre_contacto: { type: 'string', maxLength: 150, nullable: true },
+          apellido_p_contacto: { type: 'string', maxLength: 150, nullable: true },
+          apellido_m_contacto: { type: 'string', maxLength: 150, nullable: true },
+          telefono: { type: 'string', maxLength: 20, nullable: true },
+          email: { type: 'string', format: 'email', maxLength: 150, nullable: true },
+        },
+      },
+      UpdateSolicitudDetalleClienteRequest: {
+        type: 'object',
+        properties: {
+          empresa_cliente: { type: 'string', maxLength: 150, nullable: true },
+          nombre_contacto: { type: 'string', maxLength: 150, nullable: true },
+          apellido_p_contacto: { type: 'string', maxLength: 150, nullable: true },
+          apellido_m_contacto: { type: 'string', maxLength: 150, nullable: true },
+          telefono: { type: 'string', maxLength: 20, nullable: true },
+          email: { type: 'string', format: 'email', maxLength: 150, nullable: true },
+        },
+      },
+      SolicitudDeposito: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          cuenta_empresa_austral_nombre: { type: 'string', nullable: true },
+          cuenta_empresa_austral_banco: { type: 'string', nullable: true },
+          cuenta_deposito: { type: 'string', nullable: true },
+          monto_depositado: { type: 'string', example: '50000.00' },
+          fecha_deposito: { type: 'string', format: 'date-time' },
+          referencia_deposito: { type: 'string', nullable: true },
+          ficha_url: { type: 'string', nullable: true },
+          comentarios: { type: 'string', nullable: true },
+        },
+      },
+      CreateSolicitudDepositoRequest: {
+        type: 'object',
+        required: ['solicitud_id', 'cuenta_empresa_austral_id', 'monto_depositado', 'fecha_deposito'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          cuenta_deposito: { type: 'string', maxLength: 50, nullable: true },
+          monto_depositado: { type: 'number', format: 'float', minimum: 0.01, example: 50000 },
+          fecha_deposito: { type: 'string', format: 'date-time', example: '2026-05-26T10:00:00.000Z' },
+          referencia_deposito: { type: 'string', maxLength: 100, nullable: true },
+          ficha_url: { type: 'string', nullable: true },
+          comentarios: { type: 'string', nullable: true },
+        },
+      },
+      UpdateSolicitudDepositoRequest: {
+        type: 'object',
+        properties: {
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          cuenta_deposito: { type: 'string', maxLength: 50, nullable: true },
+          monto_depositado: { type: 'number', format: 'float', minimum: 0.01 },
+          fecha_deposito: { type: 'string', format: 'date-time' },
+          referencia_deposito: { type: 'string', maxLength: 100, nullable: true },
+          ficha_url: { type: 'string', nullable: true },
+          comentarios: { type: 'string', nullable: true },
+        },
+      },
+      SolicitudComentario: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          escrito_por: { type: 'string', format: 'uuid' },
+          escrito_por_username: { type: 'string', nullable: true },
+          rol: { type: 'string', example: 'ADMIN' },
+          comentario: { type: 'string' },
+          fecha_comentario: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateSolicitudComentarioRequest: {
+        type: 'object',
+        required: ['solicitud_id', 'comentario'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          comentario: { type: 'string', minLength: 1 },
+          rol: {
+            type: 'string',
+            enum: ['ADMIN', 'USER', 'ASOCIADO', 'TENIENTE', 'BENEFICIARIO', 'SISTEMA'],
+            description: 'Opcional; si no se envía se infiere del usuario autenticado',
+          },
+        },
+      },
+      UpdateSolicitudComentarioRequest: {
+        type: 'object',
+        required: ['comentario'],
+        properties: {
+          comentario: { type: 'string', minLength: 1 },
+        },
+      },
+      SolicitudHistorial: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          estado_anterior_id: { type: 'integer', nullable: true },
+          estado_anterior_codigo: { type: 'string', nullable: true },
+          estado_nuevo_id: { type: 'integer', example: 1 },
+          estado_nuevo_codigo: { type: 'string', example: 'PENDIENTE' },
+          cambiado_por: { type: 'string', format: 'uuid' },
+          cambiado_por_username: { type: 'string', nullable: true },
+          cambiado_en: { type: 'string', format: 'date-time' },
+          motivo: { type: 'string', nullable: true },
+          ip_address: { type: 'string', nullable: true },
+          user_agent: { type: 'string', nullable: true },
+        },
+      },
+      CreateSolicitudHistorialRequest: {
+        type: 'object',
+        required: ['solicitud_id', 'estado_nuevo_id'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          estado_anterior_id: { type: 'integer', nullable: true, example: null },
+          estado_nuevo_id: { type: 'integer', example: 1 },
+          motivo: { type: 'string', nullable: true, example: 'Registro inicial' },
+        },
+      },
+      SolicitudComision: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          comision_asociado: { type: 'string', example: '2.50' },
+          comision_cliente: { type: 'string', example: '1.00' },
+          monto_comision_asociado: { type: 'string', nullable: true },
+          monto_comision_cliente: { type: 'string', nullable: true },
+          pagado_asociado: { type: 'boolean', example: false },
+          pagado_cliente: { type: 'boolean', example: false },
+        },
+      },
+      CreateSolicitudComisionRequest: {
+        type: 'object',
+        required: ['solicitud_id'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          comision_asociado: { type: 'number', minimum: 0, maximum: 100, example: 2.5 },
+          comision_cliente: { type: 'number', minimum: 0, maximum: 100, example: 1.0 },
+          monto_comision_asociado: { type: 'number', minimum: 0, nullable: true },
+          monto_comision_cliente: { type: 'number', minimum: 0, nullable: true },
+          pagado_asociado: { type: 'boolean', example: false },
+          pagado_cliente: { type: 'boolean', example: false },
+        },
+      },
+      UpdateSolicitudComisionRequest: {
+        type: 'object',
+        properties: {
+          comision_asociado: { type: 'number', minimum: 0, maximum: 100 },
+          comision_cliente: { type: 'number', minimum: 0, maximum: 100 },
+          monto_comision_asociado: { type: 'number', minimum: 0, nullable: true },
+          monto_comision_cliente: { type: 'number', minimum: 0, nullable: true },
+          pagado_asociado: { type: 'boolean' },
+          pagado_cliente: { type: 'boolean' },
         },
       },
       RegisterRequest: {
@@ -885,6 +1122,292 @@ const swaggerSpec = {
     '/cliente-beneficiarios/{id}': {
       get: { tags: ['Cliente Beneficiarios'], summary: 'Obtener por ID', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'OK' } } },
       delete: { tags: ['Cliente Beneficiarios'], summary: 'Eliminar asignación', security: [{ bearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'OK' } } },
+    },
+    '/solicitudes': {
+      get: {
+        tags: ['Solicitudes'],
+        summary: 'Listar solicitudes',
+        description: 'Requiere rol **ADMIN**. Filtros opcionales por entidades relacionadas y estado.',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'active', in: 'query', schema: { type: 'string', enum: ['true', 'false'] }, description: 'true = sin deactivated_at' },
+          { name: 'cliente_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'empresa_austral_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'asociado_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'beneficiario_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'estado_id', in: 'query', schema: { type: 'integer' }, description: 'ID de cat_estados (1=PENDIENTE)' },
+        ],
+        responses: {
+          200: {
+            description: 'Lista de solicitudes',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { type: 'array', items: { $ref: '#/components/schemas/Solicitud' } } } },
+                  ],
+                },
+              },
+            },
+          },
+          401: { description: 'No autenticado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+          403: { description: 'Sin permisos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+      post: {
+        tags: ['Solicitudes'],
+        summary: 'Crear solicitud',
+        description: 'Crea con `estado_id=1` (PENDIENTE) y `etapa_actual=registro`. Sin flujo de aprobación en esta fase.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudRequest' } } },
+        },
+        responses: {
+          201: {
+            description: 'Solicitud creada con detalle embebido',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/SolicitudDetalle' } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { description: 'Validación o vínculos inválidos', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+    },
+    '/solicitudes/{id}': {
+      get: {
+        tags: ['Solicitudes'],
+        summary: 'Obtener solicitud por ID',
+        description: 'Incluye detalle_cliente, deposito, comisiones, comentarios e historial.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: {
+          200: {
+            description: 'Solicitud con relaciones',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/SolicitudDetalle' } } },
+                  ],
+                },
+              },
+            },
+          },
+          404: { description: 'No encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+    },
+    '/solicitud-detalle-cliente': {
+      get: {
+        tags: ['Solicitud Detalle Cliente'],
+        summary: 'Listar detalles de cliente',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Solicitud Detalle Cliente'],
+        summary: 'Crear detalle de cliente',
+        description: 'Un solo registro por solicitud (unique solicitud_id).',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudDetalleClienteRequest' } } },
+        },
+        responses: {
+          201: { description: 'Creado' },
+          409: { description: 'Ya existe detalle para esa solicitud' },
+        },
+      },
+    },
+    '/solicitud-detalle-cliente/{id}': {
+      get: {
+        tags: ['Solicitud Detalle Cliente'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Solicitud Detalle Cliente'],
+        summary: 'Actualizar detalle',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSolicitudDetalleClienteRequest' } } },
+        },
+        responses: { 200: { description: 'Actualizado' } },
+      },
+    },
+    '/solicitud-deposito': {
+      get: {
+        tags: ['Solicitud Depósito'],
+        summary: 'Listar depósitos',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Solicitud Depósito'],
+        summary: 'Registrar depósito',
+        description: 'Un solo depósito por solicitud. Valida cuenta empresa Austral activa.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudDepositoRequest' } } },
+        },
+        responses: {
+          201: { description: 'Creado' },
+          409: { description: 'Ya existe depósito para esa solicitud' },
+        },
+      },
+    },
+    '/solicitud-deposito/{id}': {
+      get: {
+        tags: ['Solicitud Depósito'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Solicitud Depósito'],
+        summary: 'Actualizar depósito',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSolicitudDepositoRequest' } } },
+        },
+        responses: { 200: { description: 'Actualizado' } },
+      },
+    },
+    '/solicitud-comentarios': {
+      get: {
+        tags: ['Solicitud Comentarios'],
+        summary: 'Listar comentarios',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Solicitud Comentarios'],
+        summary: 'Crear comentario',
+        description: '`escrito_por` se toma del usuario autenticado.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudComentarioRequest' } } },
+        },
+        responses: { 201: { description: 'Creado' } },
+      },
+    },
+    '/solicitud-comentarios/{id}': {
+      get: {
+        tags: ['Solicitud Comentarios'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Solicitud Comentarios'],
+        summary: 'Actualizar comentario',
+        description: 'Solo el autor puede editar.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSolicitudComentarioRequest' } } },
+        },
+        responses: {
+          200: { description: 'Actualizado' },
+          403: { description: 'No es el autor' },
+        },
+      },
+    },
+    '/solicitud-historial': {
+      get: {
+        tags: ['Solicitud Historial'],
+        summary: 'Listar historial',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Solicitud Historial'],
+        summary: 'Registrar cambio de estado',
+        description: 'Append-only. Sin flujo automático de aprobación. Captura IP y user-agent.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudHistorialRequest' } } },
+        },
+        responses: { 201: { description: 'Registrado' } },
+      },
+    },
+    '/solicitud-historial/{id}': {
+      get: {
+        tags: ['Solicitud Historial'],
+        summary: 'Obtener registro por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+    },
+    '/solicitud-comisiones': {
+      get: {
+        tags: ['Solicitud Comisiones'],
+        summary: 'Listar comisiones',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Solicitud Comisiones'],
+        summary: 'Registrar comisiones',
+        description: 'Un registro por solicitud. Porcentajes 0–100.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudComisionRequest' } } },
+        },
+        responses: {
+          201: { description: 'Creado' },
+          409: { description: 'Ya existen comisiones para esa solicitud' },
+        },
+      },
+    },
+    '/solicitud-comisiones/{id}': {
+      get: {
+        tags: ['Solicitud Comisiones'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Solicitud Comisiones'],
+        summary: 'Actualizar comisiones',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSolicitudComisionRequest' } } },
+        },
+        responses: { 200: { description: 'Actualizado' } },
+      },
     },
   },
 };

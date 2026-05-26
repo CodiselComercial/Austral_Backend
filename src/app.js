@@ -16,6 +16,12 @@ const clienteRoutes = require('./modules/clientes/cliente.routes');
 const clienteAsociadoRoutes = require('./modules/cliente-asociados/clienteAsociado.routes');
 const cuentaBancariaClienteRoutes = require('./modules/cuentas-bancarias-clientes/cuentaBancariaCliente.routes');
 const clienteBeneficiarioRoutes = require('./modules/cliente-beneficiarios/clienteBeneficiario.routes');
+const solicitudRoutes = require('./modules/solicitudes/solicitud.routes');
+const solicitudDetalleClienteRoutes = require('./modules/solicitud-detalle-cliente/solicitudDetalleCliente.routes');
+const solicitudDepositoRoutes = require('./modules/solicitud-deposito/solicitudDeposito.routes');
+const solicitudComentarioRoutes = require('./modules/solicitud-comentarios/solicitudComentario.routes');
+const solicitudHistorialRoutes = require('./modules/solicitud-historial/solicitudHistorial.routes');
+const solicitudComisionRoutes = require('./modules/solicitud-comisiones/solicitudComision.routes');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 const { setupSwagger } = require('./config/swagger');
 
@@ -51,6 +57,12 @@ const createApp = () => {
   app.use('/cliente-asociados', clienteAsociadoRoutes);
   app.use('/cuentas-bancarias-clientes', cuentaBancariaClienteRoutes);
   app.use('/cliente-beneficiarios', clienteBeneficiarioRoutes);
+  app.use('/solicitudes', solicitudRoutes);
+  app.use('/solicitud-detalle-cliente', solicitudDetalleClienteRoutes);
+  app.use('/solicitud-deposito', solicitudDepositoRoutes);
+  app.use('/solicitud-comentarios', solicitudComentarioRoutes);
+  app.use('/solicitud-historial', solicitudHistorialRoutes);
+  app.use('/solicitud-comisiones', solicitudComisionRoutes);
 
   app.use((req, res) => {
     res.status(404).json({
