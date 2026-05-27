@@ -22,6 +22,9 @@ const solicitudDepositoRoutes = require('./modules/solicitud-deposito/solicitudD
 const solicitudComentarioRoutes = require('./modules/solicitud-comentarios/solicitudComentario.routes');
 const solicitudHistorialRoutes = require('./modules/solicitud-historial/solicitudHistorial.routes');
 const solicitudComisionRoutes = require('./modules/solicitud-comisiones/solicitudComision.routes');
+const beneficiarioRetornoRoutes = require('./modules/beneficiarios-retornos/beneficiarioRetorno.routes');
+const pagoBeneficiarioRoutes = require('./modules/pagos-beneficiarios/pagoBeneficiario.routes');
+const solicitudRetornoRoutes = require('./modules/solicitud-retorno/solicitudRetorno.routes');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 const { setupSwagger } = require('./config/swagger');
 
@@ -63,6 +66,9 @@ const createApp = () => {
   app.use('/solicitud-comentarios', solicitudComentarioRoutes);
   app.use('/solicitud-historial', solicitudHistorialRoutes);
   app.use('/solicitud-comisiones', solicitudComisionRoutes);
+  app.use('/beneficiarios-retornos', beneficiarioRetornoRoutes);
+  app.use('/pagos-beneficiarios', pagoBeneficiarioRoutes);
+  app.use('/solicitud-retorno', solicitudRetornoRoutes);
 
   app.use((req, res) => {
     res.status(404).json({

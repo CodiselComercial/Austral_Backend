@@ -18,7 +18,13 @@ const listSolicitudQuerySchema = Joi.object({
   estado_id: Joi.number().integer().positive().optional(),
 });
 
+const agentDecisionSchema = Joi.object({
+  motivo: Joi.string().trim().allow(null, '').optional(),
+  comentario: Joi.string().trim().allow(null, '').optional(),
+});
+
 module.exports = {
   createSolicitudSchema,
   listSolicitudQuerySchema,
+  agentDecisionSchema,
 };

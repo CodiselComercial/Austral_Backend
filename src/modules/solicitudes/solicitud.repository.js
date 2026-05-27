@@ -76,6 +76,14 @@ class SolicitudRepository {
     const query = trx ? trx(this.table) : this.db(this.table);
     return query.insert(data).returning(SolicitudModel.columns);
   }
+
+  updateEstado(id, data, trx = null) {
+    const query = trx ? trx(this.table) : this.db(this.table);
+    return query
+      .where({ id })
+      .update({ ...data, updated_at: this.db.fn.now() })
+      .returning(SolicitudModel.columns);
+  }
 }
 
 module.exports = SolicitudRepository;

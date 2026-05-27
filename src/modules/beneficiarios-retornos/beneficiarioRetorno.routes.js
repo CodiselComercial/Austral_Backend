@@ -1,18 +1,15 @@
 const express = require('express');
 const {
-  getSolicitudes,
-  getSolicitudById,
-  createSolicitud,
-  approveSolicitud,
-  rejectSolicitud,
-  verifySolicitud,
-  rejectSolicitudBanco,
-} = require('./solicitud.controller');
+  getRetornos,
+  getRetornoById,
+  createRetorno,
+  updateRetorno,
+} = require('./beneficiarioRetorno.controller');
 const {
-  createSolicitudSchema,
-  listSolicitudQuerySchema,
-  agentDecisionSchema,
-} = require('./solicitud.validation');
+  createBeneficiarioRetornoSchema,
+  updateBeneficiarioRetornoSchema,
+  listBeneficiarioRetornoQuerySchema,
+} = require('./beneficiarioRetorno.validation');
 const authenticate = require('../../middlewares/auth.middleware');
 const authorize = require('../../middlewares/authorize.middleware');
 const validate = require('../../middlewares/validate.middleware');
@@ -37,12 +34,9 @@ const validateQuery = (schema) => (req, res, next) => {
 
 router.use(authenticate, authorize(['ADMIN']));
 
-router.get('/', validateQuery(listSolicitudQuerySchema), getSolicitudes);
-router.get('/:id', getSolicitudById);
-router.post('/', validate(createSolicitudSchema), createSolicitud);
-router.post('/:id/aprobar', validate(agentDecisionSchema), approveSolicitud);
-router.post('/:id/rechazar', validate(agentDecisionSchema), rejectSolicitud);
-router.post('/:id/verificar', validate(agentDecisionSchema), verifySolicitud);
-router.post('/:id/rechazar-banco', validate(agentDecisionSchema), rejectSolicitudBanco);
+router.get('/', validateQuery(listBeneficiarioRetornoQuerySchema), getRetornos);
+router.get('/:id', getRetornoById);
+router.post('/', validate(createBeneficiarioRetornoSchema), createRetorno);
+router.put('/:id', validate(updateBeneficiarioRetornoSchema), updateRetorno);
 
 module.exports = router;

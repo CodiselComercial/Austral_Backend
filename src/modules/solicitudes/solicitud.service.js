@@ -1,4 +1,6 @@
+const db = require('../../config/database');
 const AppError = require('../../shared/errors/AppError');
+const SolicitudGuardService = require('../../shared/solicitudGuard.service');
 const SolicitudRepository = require('./solicitud.repository');
 const ClienteRepository = require('../clientes/cliente.repository');
 const EmpresaAustralRepository = require('../empresas-austral/empresaAustral.repository');
@@ -11,10 +13,19 @@ const SolicitudDepositoRepository = require('../solicitud-deposito/solicitudDepo
 const SolicitudComentarioRepository = require('../solicitud-comentarios/solicitudComentario.repository');
 const SolicitudHistorialRepository = require('../solicitud-historial/solicitudHistorial.repository');
 const SolicitudComisionRepository = require('../solicitud-comisiones/solicitudComision.repository');
+const BeneficiarioRetornoRepository = require('../beneficiarios-retornos/beneficiarioRetorno.repository');
+const PagoBeneficiarioRepository = require('../pagos-beneficiarios/pagoBeneficiario.repository');
+const SolicitudRetornoRepository = require('../solicitud-retorno/solicitudRetorno.repository');
+
+const ESTADO_PENDIENTE = 1;
+const ESTADO_APROBADO = 2;
+const ESTADO_RECHAZADO = 3;
 
 class SolicitudService {
   constructor(
     solicitudRepository = new SolicitudRepository(),
+    solicitudGuard = new SolicitudGuardService(),
+    database = db,
     clienteRepository = new ClienteRepository(),
     empresaAustralRepository = new EmpresaAustralRepository(),
     asociadoRepository = new AsociadoRepository(),
@@ -26,8 +37,13 @@ class SolicitudService {
     solicitudComentarioRepository = new SolicitudComentarioRepository(),
     solicitudHistorialRepository = new SolicitudHistorialRepository(),
     solicitudComisionRepository = new SolicitudComisionRepository(),
+    beneficiarioRetornoRepository = new BeneficiarioRetornoRepository(),
+    pagoBeneficiarioRepository = new PagoBeneficiarioRepository(),
+    solicitudRetornoRepository = new SolicitudRetornoRepository(),
   ) {
     this.solicitudRepository = solicitudRepository;
+    this.solicitudGuard = solicitudGuard;
+    this.db = database;
     this.clienteRepository = clienteRepository;
     this.empresaAustralRepository = empresaAustralRepository;
     this.asociadoRepository = asociadoRepository;
@@ -39,6 +55,9 @@ class SolicitudService {
     this.solicitudComentarioRepository = solicitudComentarioRepository;
     this.solicitudHistorialRepository = solicitudHistorialRepository;
     this.solicitudComisionRepository = solicitudComisionRepository;
+    this.beneficiarioRetornoRepository = beneficiarioRetornoRepository;
+    this.pagoBeneficiarioRepository = pagoBeneficiarioRepository;
+    this.solicitudRetornoRepository = solicitudRetornoRepository;
   }
 
   parseActiveFilter(active) {
@@ -51,6 +70,136 @@ class SolicitudService {
     if (value === undefined || value === null || value === '') return null;
     const parsed = Number.parseInt(value, 10);
     return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  normalizeOptionalString(value) {
+    if (value === undefined) return undefined;
+    if (value === null || value === '') return null;
+    return value;
+  }
+
+  resolveComentarioRol(user) {
+    if (user.roles?.includes('ADMIN')) return 'ADMIN';
+    if (user.roles?.length > 0) return user.roles[0];
+    return 'ADMIN';
+  }
+
+  async processWorkflowTransition(
+    solicitudId,
+    { requiredEstadoId, invalidEstadoMessage, nuevoEstadoId, etapaActual, requireDeposito = false },
+    payload,
+    user,
+    meta = {},
+  ) {
+    return this.db.transaction(async (trx) => {
+      const solicitud = await this.solicitudGuard.assertSolicitudActiva(solicitudId, trx);
+
+      if (solicitud.estado_id !== requiredEstadoId) {
+        throw new AppError(invalidEstadoMessage, 400);
+      }
+
+      if (requireDeposito) {
+        const deposito = await this.solicitudDepositoRepository.findBySolicitudId(solicitudId, trx);
+        if (!deposito) {
+          throw new AppError('La solicitud no tiene depósito registrado', 400);
+        }
+      }
+
+      await this.solicitudRepository.updateEstado(
+        solicitudId,
+        {
+          estado_id: nuevoEstadoId,
+          etapa_actual: etapaActual,
+          updated_by: user.id,
+        },
+        trx,
+      );
+
+      await this.solicitudHistorialRepository.create(
+        {
+          solicitud_id: solicitudId,
+          estado_anterior_id: solicitud.estado_id,
+          estado_nuevo_id: nuevoEstadoId,
+          cambiado_por: user.id,
+          motivo: this.normalizeOptionalString(payload.motivo),
+          ip_address: meta.ip_address || null,
+          user_agent: meta.user_agent || null,
+        },
+        trx,
+      );
+
+      const comentario = this.normalizeOptionalString(payload.comentario);
+      if (comentario) {
+        await this.solicitudComentarioRepository.create(
+          {
+            solicitud_id: solicitudId,
+            escrito_por: user.id,
+            rol: this.resolveComentarioRol(user),
+            comentario,
+          },
+          trx,
+        );
+      }
+    });
+  }
+
+  async processAgentDecision(solicitudId, nuevoEstadoId, etapaActual, payload, user, meta = {}) {
+    return this.processWorkflowTransition(
+      solicitudId,
+      {
+        requiredEstadoId: ESTADO_PENDIENTE,
+        invalidEstadoMessage: 'Solo se pueden procesar solicitudes en estado pendiente',
+        nuevoEstadoId,
+        etapaActual,
+      },
+      payload,
+      user,
+      meta,
+    );
+  }
+
+  async approveSolicitud(id, payload = {}, user, meta = {}) {
+    await this.processAgentDecision(id, ESTADO_APROBADO, 'aprobado', payload, user, meta);
+    return this.getById(id);
+  }
+
+  async rejectSolicitud(id, payload = {}, user, meta = {}) {
+    await this.processAgentDecision(id, ESTADO_RECHAZADO, 'rechazado', payload, user, meta);
+    return this.getById(id);
+  }
+
+  async verifySolicitud(id, payload = {}, user, meta = {}) {
+    await this.processWorkflowTransition(
+      id,
+      {
+        requiredEstadoId: ESTADO_APROBADO,
+        invalidEstadoMessage: 'Solo se pueden verificar solicitudes aprobadas por el agente',
+        nuevoEstadoId: ESTADO_APROBADO,
+        etapaActual: 'verificado_banco',
+        requireDeposito: true,
+      },
+      payload,
+      user,
+      meta,
+    );
+    return this.getById(id);
+  }
+
+  async rejectSolicitudBanco(id, payload = {}, user, meta = {}) {
+    await this.processWorkflowTransition(
+      id,
+      {
+        requiredEstadoId: ESTADO_APROBADO,
+        invalidEstadoMessage: 'Solo se pueden rechazar en banco solicitudes aprobadas por el agente',
+        nuevoEstadoId: ESTADO_RECHAZADO,
+        etapaActual: 'rechazado_banco',
+        requireDeposito: true,
+      },
+      payload,
+      user,
+      meta,
+    );
+    return this.getById(id);
   }
 
   async validateClienteActivo(clienteId) {
@@ -129,12 +278,24 @@ class SolicitudService {
       throw new AppError('Solicitud no encontrada', 404);
     }
 
-    const [detalleCliente, deposito, comisiones, comentarios, historial] = await Promise.all([
+    const [
+      detalleCliente,
+      deposito,
+      comisiones,
+      comentarios,
+      historial,
+      beneficiariosRetornos,
+      pagosBeneficiarios,
+      retorno,
+    ] = await Promise.all([
       this.solicitudDetalleClienteRepository.findBySolicitudId(id),
       this.solicitudDepositoRepository.findBySolicitudId(id),
       this.solicitudComisionRepository.findBySolicitudId(id),
       this.solicitudComentarioRepository.findAll({ solicitudId: id }),
       this.solicitudHistorialRepository.findAll({ solicitudId: id }),
+      this.beneficiarioRetornoRepository.findAll({ solicitudId: id }),
+      this.pagoBeneficiarioRepository.findAll({ solicitudId: id }),
+      this.solicitudRetornoRepository.findBySolicitudId(id),
     ]);
 
     return {
@@ -144,6 +305,9 @@ class SolicitudService {
       comisiones: comisiones || null,
       comentarios,
       historial,
+      beneficiarios_retornos: beneficiariosRetornos,
+      pagos_beneficiarios: pagosBeneficiarios,
+      retorno: retorno || null,
     };
   }
 

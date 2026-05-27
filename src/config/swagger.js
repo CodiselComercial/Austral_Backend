@@ -371,6 +371,15 @@ const swaggerSpec = {
                 type: 'array',
                 items: { $ref: '#/components/schemas/SolicitudHistorial' },
               },
+              beneficiarios_retornos: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/BeneficiarioRetorno' },
+              },
+              pagos_beneficiarios: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/PagoBeneficiario' },
+              },
+              retorno: { $ref: '#/components/schemas/SolicitudRetorno', nullable: true },
             },
           },
         ],
@@ -383,6 +392,14 @@ const swaggerSpec = {
           empresa_austral_id: { type: 'string', format: 'uuid' },
           asociado_id: { type: 'string', format: 'uuid' },
           beneficiario_id: { type: 'string', format: 'uuid' },
+        },
+      },
+      AgentDecisionRequest: {
+        type: 'object',
+        description: 'Body opcional para aprobación/rechazo por agente',
+        properties: {
+          motivo: { type: 'string', nullable: true, description: 'Motivo registrado en solicitud_historial' },
+          comentario: { type: 'string', nullable: true, description: 'Comentario opcional en solicitud_comentarios' },
         },
       },
       SolicitudDetalleCliente: {
@@ -561,6 +578,119 @@ const swaggerSpec = {
           monto_comision_cliente: { type: 'number', minimum: 0, nullable: true },
           pagado_asociado: { type: 'boolean' },
           pagado_cliente: { type: 'boolean' },
+        },
+      },
+      BeneficiarioRetorno: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          beneficiario_id: { type: 'string', format: 'uuid', nullable: true },
+          monto_beneficiario: { type: 'string', example: '10000.00' },
+          metodo_pago: { type: 'string', example: 'SPEI' },
+          estado_pago_id: { type: 'integer', example: 1 },
+          estado_pago_codigo: { type: 'string', example: 'PENDIENTE' },
+        },
+      },
+      CreateBeneficiarioRetornoRequest: {
+        type: 'object',
+        required: ['solicitud_id', 'monto_beneficiario', 'metodo_pago'],
+        description: 'Requiere beneficiario_id o nombre_beneficiario',
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          beneficiario_id: { type: 'string', format: 'uuid' },
+          nombre_beneficiario: { type: 'string' },
+          monto_beneficiario: { type: 'number', minimum: 0.01 },
+          cuenta_bancaria_beneficiario_id: { type: 'string', format: 'uuid' },
+          metodo_pago: { type: 'string', enum: ['TRANSFERENCIA', 'SPEI', 'EFECTIVO', 'TARJETA', 'CHEQUE'] },
+          monto_pagado: { type: 'number', minimum: 0, nullable: true },
+          comprobante_url: { type: 'string', nullable: true },
+          fecha_pago: { type: 'string', format: 'date-time', nullable: true },
+          estado_pago_id: { type: 'integer', example: 1 },
+        },
+      },
+      UpdateBeneficiarioRetornoRequest: {
+        type: 'object',
+        properties: {
+          monto_beneficiario: { type: 'number', minimum: 0.01 },
+          metodo_pago: { type: 'string', enum: ['TRANSFERENCIA', 'SPEI', 'EFECTIVO', 'TARJETA', 'CHEQUE'] },
+          monto_pagado: { type: 'number', minimum: 0, nullable: true },
+          comprobante_url: { type: 'string', nullable: true },
+          fecha_pago: { type: 'string', format: 'date-time', nullable: true },
+          estado_pago_id: { type: 'integer' },
+        },
+      },
+      PagoBeneficiario: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          beneficiario_id: { type: 'string', format: 'uuid' },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          monto_pagado: { type: 'string', example: '5000.00' },
+          pagado_por: { type: 'string', format: 'uuid' },
+          estado_id: { type: 'integer', example: 1 },
+          fecha_pago: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreatePagoBeneficiarioRequest: {
+        type: 'object',
+        required: ['solicitud_id', 'beneficiario_id', 'cuenta_empresa_austral_id', 'monto_pagado'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          beneficiario_id: { type: 'string', format: 'uuid' },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          monto_pagado: { type: 'number', minimum: 0.01 },
+          comprobante_url: { type: 'string', nullable: true },
+          fecha_pago: { type: 'string', format: 'date-time' },
+          estado_id: { type: 'integer', example: 1 },
+        },
+      },
+      UpdatePagoBeneficiarioRequest: {
+        type: 'object',
+        properties: {
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          monto_pagado: { type: 'number', minimum: 0.01 },
+          comprobante_url: { type: 'string', nullable: true },
+          fecha_pago: { type: 'string', format: 'date-time' },
+          estado_id: { type: 'integer' },
+        },
+      },
+      SolicitudRetorno: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          solicitud_id: { type: 'string', format: 'uuid' },
+          metodo_devolucion: { type: 'string', example: 'SPEI' },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid', nullable: true },
+          monto_retorno: { type: 'string', nullable: true },
+          fecha_retorno: { type: 'string', format: 'date-time', nullable: true },
+        },
+      },
+      CreateSolicitudRetornoRequest: {
+        type: 'object',
+        required: ['solicitud_id', 'metodo_devolucion'],
+        properties: {
+          solicitud_id: { type: 'string', format: 'uuid' },
+          metodo_devolucion: { type: 'string', enum: ['TRANSFERENCIA', 'SPEI', 'EFECTIVO', 'TARJETA', 'CHEQUE', 'CLABE'] },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          cuenta_retorno: { type: 'string' },
+          clave_retorno: { type: 'string' },
+          tarjeta_retorno: { type: 'string' },
+          fecha_retorno: { type: 'string', format: 'date-time' },
+          monto_retorno: { type: 'number', minimum: 0 },
+        },
+      },
+      UpdateSolicitudRetornoRequest: {
+        type: 'object',
+        properties: {
+          metodo_devolucion: { type: 'string', enum: ['TRANSFERENCIA', 'SPEI', 'EFECTIVO', 'TARJETA', 'CHEQUE', 'CLABE'] },
+          cuenta_empresa_austral_id: { type: 'string', format: 'uuid' },
+          cuenta_retorno: { type: 'string' },
+          clave_retorno: { type: 'string' },
+          tarjeta_retorno: { type: 'string' },
+          fecha_retorno: { type: 'string', format: 'date-time' },
+          monto_retorno: { type: 'number', minimum: 0 },
         },
       },
       RegisterRequest: {
@@ -1207,6 +1337,138 @@ const swaggerSpec = {
         },
       },
     },
+    '/solicitudes/{id}/aprobar': {
+      post: {
+        tags: ['Solicitudes'],
+        summary: 'Aprobar solicitud (agente)',
+        description: 'Transacción atómica: actualiza estado a APROBADO (2), registra historial y comentario opcional. Solo solicitudes PENDIENTE (1) activas.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AgentDecisionRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Solicitud aprobada',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/SolicitudDetalle' } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { description: 'Estado inválido o solicitud desactivada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+          404: { description: 'No encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+    },
+    '/solicitudes/{id}/rechazar': {
+      post: {
+        tags: ['Solicitudes'],
+        summary: 'Rechazar solicitud (agente)',
+        description: 'Transacción atómica: actualiza estado a RECHAZADO (3), registra historial y comentario opcional. Solo solicitudes PENDIENTE (1) activas.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AgentDecisionRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Solicitud rechazada',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/SolicitudDetalle' } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { description: 'Estado inválido o solicitud desactivada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+          404: { description: 'No encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+    },
+    '/solicitudes/{id}/verificar': {
+      post: {
+        tags: ['Solicitudes'],
+        summary: 'Verificar solicitud (banco)',
+        description: 'Transacción atómica: valida depósito registrado, mantiene estado APROBADO (2), actualiza etapa a `verificado_banco`, registra historial y comentario opcional. Solo solicitudes APROBADO (2) activas.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AgentDecisionRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Solicitud verificada por banco',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/SolicitudDetalle' } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { description: 'Estado inválido, sin depósito o solicitud desactivada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+          404: { description: 'No encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+    },
+    '/solicitudes/{id}/rechazar-banco': {
+      post: {
+        tags: ['Solicitudes'],
+        summary: 'Rechazar solicitud (banco)',
+        description: 'Transacción atómica: valida depósito registrado, actualiza estado a RECHAZADO (3) con etapa `rechazado_banco`, registra historial y comentario opcional. Solo solicitudes APROBADO (2) activas.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AgentDecisionRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Solicitud rechazada por banco',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/SolicitudDetalle' } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { description: 'Estado inválido, sin depósito o solicitud desactivada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+          404: { description: 'No encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        },
+      },
+    },
     '/solicitud-detalle-cliente': {
       get: {
         tags: ['Solicitud Detalle Cliente'],
@@ -1405,6 +1667,138 @@ const swaggerSpec = {
         requestBody: {
           required: true,
           content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSolicitudComisionRequest' } } },
+        },
+        responses: { 200: { description: 'Actualizado' } },
+      },
+    },
+    '/beneficiarios-retornos': {
+      get: {
+        tags: ['Beneficiarios Retornos'],
+        summary: 'Listar retornos de beneficiarios',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'beneficiario_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Beneficiarios Retornos'],
+        summary: 'Registrar retorno de beneficiario',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateBeneficiarioRetornoRequest' } } },
+        },
+        responses: { 201: { description: 'Creado' } },
+      },
+    },
+    '/beneficiarios-retornos/{id}': {
+      get: {
+        tags: ['Beneficiarios Retornos'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Beneficiarios Retornos'],
+        summary: 'Actualizar retorno',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateBeneficiarioRetornoRequest' } } },
+        },
+        responses: { 200: { description: 'Actualizado' } },
+      },
+    },
+    '/pagos-beneficiarios': {
+      get: {
+        tags: ['Pagos Beneficiarios'],
+        summary: 'Listar pagos a beneficiarios',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'beneficiario_id', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'estado_id', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Pagos Beneficiarios'],
+        summary: 'Registrar pago a beneficiario',
+        description: 'Un pago por beneficiario por solicitud (unique). pagado_por = usuario autenticado.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreatePagoBeneficiarioRequest' } } },
+        },
+        responses: {
+          201: { description: 'Creado' },
+          409: { description: 'Ya existe pago para ese beneficiario en la solicitud' },
+        },
+      },
+    },
+    '/pagos-beneficiarios/{id}': {
+      get: {
+        tags: ['Pagos Beneficiarios'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Pagos Beneficiarios'],
+        summary: 'Actualizar pago',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdatePagoBeneficiarioRequest' } } },
+        },
+        responses: { 200: { description: 'Actualizado' } },
+      },
+    },
+    '/solicitud-retorno': {
+      get: {
+        tags: ['Solicitud Retorno'],
+        summary: 'Listar retornos de solicitud',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'solicitud_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      post: {
+        tags: ['Solicitud Retorno'],
+        summary: 'Registrar retorno de solicitud',
+        description: 'Un registro por solicitud (unique solicitud_id).',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSolicitudRetornoRequest' } } },
+        },
+        responses: {
+          201: { description: 'Creado' },
+          409: { description: 'Ya existe retorno para esa solicitud' },
+        },
+      },
+    },
+    '/solicitud-retorno/{id}': {
+      get: {
+        tags: ['Solicitud Retorno'],
+        summary: 'Obtener por ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'OK' } },
+      },
+      put: {
+        tags: ['Solicitud Retorno'],
+        summary: 'Actualizar retorno',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSolicitudRetornoRequest' } } },
         },
         responses: { 200: { description: 'Actualizado' } },
       },

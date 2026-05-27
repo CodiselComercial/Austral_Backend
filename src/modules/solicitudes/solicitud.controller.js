@@ -19,8 +19,44 @@ const createSolicitud = asyncHandler(async (req, res) => {
   sendSuccess(res, solicitud, 'Solicitud creada correctamente', 201);
 });
 
+const approveSolicitud = asyncHandler(async (req, res) => {
+  const solicitud = await solicitudService.approveSolicitud(req.params.id, req.body, req.user, {
+    ip_address: req.ip,
+    user_agent: req.get('user-agent'),
+  });
+  sendSuccess(res, solicitud, 'Solicitud aprobada correctamente');
+});
+
+const rejectSolicitud = asyncHandler(async (req, res) => {
+  const solicitud = await solicitudService.rejectSolicitud(req.params.id, req.body, req.user, {
+    ip_address: req.ip,
+    user_agent: req.get('user-agent'),
+  });
+  sendSuccess(res, solicitud, 'Solicitud rechazada correctamente');
+});
+
+const verifySolicitud = asyncHandler(async (req, res) => {
+  const solicitud = await solicitudService.verifySolicitud(req.params.id, req.body, req.user, {
+    ip_address: req.ip,
+    user_agent: req.get('user-agent'),
+  });
+  sendSuccess(res, solicitud, 'Solicitud verificada por banco correctamente');
+});
+
+const rejectSolicitudBanco = asyncHandler(async (req, res) => {
+  const solicitud = await solicitudService.rejectSolicitudBanco(req.params.id, req.body, req.user, {
+    ip_address: req.ip,
+    user_agent: req.get('user-agent'),
+  });
+  sendSuccess(res, solicitud, 'Solicitud rechazada por banco correctamente');
+});
+
 module.exports = {
   getSolicitudes,
   getSolicitudById,
   createSolicitud,
+  approveSolicitud,
+  rejectSolicitud,
+  verifySolicitud,
+  rejectSolicitudBanco,
 };
