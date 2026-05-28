@@ -16,6 +16,7 @@ const SolicitudComisionRepository = require('../solicitud-comisiones/solicitudCo
 const BeneficiarioRetornoRepository = require('../beneficiarios-retornos/beneficiarioRetorno.repository');
 const PagoBeneficiarioRepository = require('../pagos-beneficiarios/pagoBeneficiario.repository');
 const SolicitudRetornoRepository = require('../solicitud-retorno/solicitudRetorno.repository');
+const PagoTenienteRepository = require('../pagos-teniente/pagoTeniente.repository');
 
 const ESTADO_PENDIENTE = 1;
 const ESTADO_APROBADO = 2;
@@ -40,6 +41,7 @@ class SolicitudService {
     beneficiarioRetornoRepository = new BeneficiarioRetornoRepository(),
     pagoBeneficiarioRepository = new PagoBeneficiarioRepository(),
     solicitudRetornoRepository = new SolicitudRetornoRepository(),
+    pagoTenienteRepository = new PagoTenienteRepository(),
   ) {
     this.solicitudRepository = solicitudRepository;
     this.solicitudGuard = solicitudGuard;
@@ -58,6 +60,7 @@ class SolicitudService {
     this.beneficiarioRetornoRepository = beneficiarioRetornoRepository;
     this.pagoBeneficiarioRepository = pagoBeneficiarioRepository;
     this.solicitudRetornoRepository = solicitudRetornoRepository;
+    this.pagoTenienteRepository = pagoTenienteRepository;
   }
 
   parseActiveFilter(active) {
@@ -287,6 +290,7 @@ class SolicitudService {
       beneficiariosRetornos,
       pagosBeneficiarios,
       retorno,
+      pagosTeniente,
     ] = await Promise.all([
       this.solicitudDetalleClienteRepository.findBySolicitudId(id),
       this.solicitudDepositoRepository.findBySolicitudId(id),
@@ -296,6 +300,7 @@ class SolicitudService {
       this.beneficiarioRetornoRepository.findAll({ solicitudId: id }),
       this.pagoBeneficiarioRepository.findAll({ solicitudId: id }),
       this.solicitudRetornoRepository.findBySolicitudId(id),
+      this.pagoTenienteRepository.findAll({ solicitudId: id }),
     ]);
 
     return {
@@ -308,6 +313,7 @@ class SolicitudService {
       beneficiarios_retornos: beneficiariosRetornos,
       pagos_beneficiarios: pagosBeneficiarios,
       retorno: retorno || null,
+      pagos_teniente: pagosTeniente,
     };
   }
 

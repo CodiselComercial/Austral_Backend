@@ -12,5 +12,6 @@ Documentación por fase de implementación del backend Austral.
 | 6 | [FASE6.md](./FASE6.md) | Workflow — aprobación agente |
 | 7 | [FASE7.md](./FASE7.md) | Banco — validación depósito |
 | 8 | [FASE8.md](./FASE8.md) | Retornos — beneficiarios, pagos, devolución |
+| 9 | [FASE9.md](./FASE9.md) | Teniente — pagos, códigos, geolocalización, historial |
 
 Esquema completo de BD: [../../BD.TXT](../../BD.TXT)

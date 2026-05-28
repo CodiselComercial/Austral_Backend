@@ -101,3 +101,5 @@ POST /solicitud-retorno
 ## Pendiente (fase 9+)
 
 Cancelaciones, gastos, movimientos, transacciones, cortes, evidencias.
+
+> **Nota:** La fase 9 (Teniente) ya está implementada — ver [FASE9.md](./FASE9.md).

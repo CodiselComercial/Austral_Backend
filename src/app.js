@@ -25,6 +25,8 @@ const solicitudComisionRoutes = require('./modules/solicitud-comisiones/solicitu
 const beneficiarioRetornoRoutes = require('./modules/beneficiarios-retornos/beneficiarioRetorno.routes');
 const pagoBeneficiarioRoutes = require('./modules/pagos-beneficiarios/pagoBeneficiario.routes');
 const solicitudRetornoRoutes = require('./modules/solicitud-retorno/solicitudRetorno.routes');
+const pagoTenienteRoutes = require('./modules/pagos-teniente/pagoTeniente.routes');
+const pagoTenienteHistorialRoutes = require('./modules/pagos-teniente-historial/pagoTenienteHistorial.routes');
 const errorHandler = require('./middlewares/errorHandler.middleware');
 const { setupSwagger } = require('./config/swagger');
 
@@ -69,6 +71,8 @@ const createApp = () => {
   app.use('/beneficiarios-retornos', beneficiarioRetornoRoutes);
   app.use('/pagos-beneficiarios', pagoBeneficiarioRoutes);
   app.use('/solicitud-retorno', solicitudRetornoRoutes);
+  app.use('/pagos-teniente', pagoTenienteRoutes);
+  app.use('/pagos-teniente-historial', pagoTenienteHistorialRoutes);
 
   app.use((req, res) => {
     res.status(404).json({
